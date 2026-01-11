@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Represents a logical trading account or portfolio
+model Account {
+  id           String    @id @default(uuid())
+  name         String
+  baseCurrency String    @default("USD") @map("base_currency")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  archivedAt   DateTime? @map("archived_at")
+
+  ledgerEntries LedgerEntry[]
+
+  @@map("account")
+}
+
+// Represents a traded asset or currency (BTC, ETH, USD, USDC, etc.)
+model Asset {
+  id        String   @id @default(uuid())
+  symbol    String   @unique
+  name      String?
+  precision Int      @default(8)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ledgerEntries          LedgerEntry[] @relation("AssetEntries")
+  referenceLedgerEntries LedgerEntry[] @relation("ReferenceAssetEntries")
+
+  @@map("asset")
+}
+
+// Entry types for ledger entries
+enum EntryType {
+  BUY
+  SELL
+  FEE
+  DEPOSIT
+  WITHDRAWAL
+  ADJUSTMENT
+
+  @@map("entry_type")
+}
+
+// Core table: each row represents a single financial event
+model LedgerEntry {
+  id        String   @id @default(uuid())
+  accountId String   @map("account_id")
+  timestamp DateTime
+
+  entryType EntryType @map("entry_type")
+
+  assetId  String @map("asset_id")
+  quantity Decimal @db.Decimal(24, 12) // Signed: positive = increase, negative = decrease
+
+  price     Decimal? @db.Decimal(24, 12) // Price per unit in base currency (nullable)
+  valueBase Decimal  @db.Decimal(24, 12) @map("value_base") // Total value in base currency (signed)
+
+  referenceAssetId String? @map("reference_asset_id") // Used for asset exchanges
+
+  externalRef String? @map("external_ref") // Exchange order ID or reference
+  notes       String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  account        Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  asset          Asset    @relation("AssetEntries", fields: [assetId], references: [id])
+  referenceAsset Asset?   @relation("ReferenceAssetEntries", fields: [referenceAssetId], references: [id])
+
+  metadata LedgerMetadata[]
+
+  @@index([accountId])
+  @@index([timestamp])
+  @@index([assetId])
+  @@index([entryType])
+  @@map("ledger_entry")
+}
+
+// Flexible key-value metadata for ledger entries
+model LedgerMetadata {
+  id            String @id @default(uuid())
+  ledgerEntryId String @map("ledger_entry_id")
+  key           String
+  value         String
+
+  ledgerEntry LedgerEntry @relation(fields: [ledgerEntryId], references: [id], onDelete: Cascade)
+
+  @@index([ledgerEntryId])
+  @@index([key])
+  @@map("ledger_metadata")
+}
