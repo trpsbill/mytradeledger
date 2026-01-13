@@ -30,6 +30,7 @@ model Asset {
 
   ledgerEntries          LedgerEntry[] @relation("AssetEntries")
   referenceLedgerEntries LedgerEntry[] @relation("ReferenceAssetEntries")
+  feeLedgerEntries       LedgerEntry[] @relation("FeeAssetEntries")
 
   @@map("asset")
 }
@@ -54,28 +55,33 @@ model LedgerEntry {
 
   entryType EntryType @map("entry_type")
 
-  assetId  String @map("asset_id")
-  quantity Decimal @db.Decimal(24, 12) // Signed: positive = increase, negative = decrease
+  symbol   String   // Trading pair symbol (e.g., "BTC/USD", "ETH-USDT")
+  quantity Decimal  @db.Decimal(24, 12) // Signed: positive = increase, negative = decrease
+  price    Decimal  @db.Decimal(24, 12) // Price per unit
+  fee      Decimal? @db.Decimal(24, 12) // Trading fee amount (optional)
 
-  price     Decimal? @db.Decimal(24, 12) // Price per unit in base currency (nullable)
-  valueBase Decimal  @db.Decimal(24, 12) @map("value_base") // Total value in base currency (signed)
+  valueBase Decimal  @db.Decimal(24, 12) @map("value_base") // Total value in base currency (signed, auto-calculated)
+  pnl       Decimal? @db.Decimal(24, 12) // Realized P&L for SELL entries (using average cost method)
 
-  referenceAssetId String? @map("reference_asset_id") // Used for asset exchanges
-
-  externalRef String? @map("external_ref") // Exchange order ID or reference
-  notes       String?
+  // Legacy fields - kept for backward compatibility
+  assetId          String? @map("asset_id")
+  referenceAssetId String? @map("reference_asset_id")
+  feeAssetId       String? @map("fee_asset_id")
+  externalRef      String? @map("external_ref")
+  notes            String?
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  account        Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  asset          Asset    @relation("AssetEntries", fields: [assetId], references: [id])
-  referenceAsset Asset?   @relation("ReferenceAssetEntries", fields: [referenceAssetId], references: [id])
+  account        Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  asset          Asset?  @relation("AssetEntries", fields: [assetId], references: [id])
+  referenceAsset Asset?  @relation("ReferenceAssetEntries", fields: [referenceAssetId], references: [id])
+  feeAsset       Asset?  @relation("FeeAssetEntries", fields: [feeAssetId], references: [id])
 
   metadata LedgerMetadata[]
 
   @@index([accountId])
   @@index([timestamp])
-  @@index([assetId])
+  @@index([symbol])
   @@index([entryType])
   @@map("ledger_entry")
 }

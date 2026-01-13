@@ -12,10 +12,23 @@ The project is designed for traders who want a clear record of what trades were 
 - Track quantity, price, fees, and timestamps
 - View cumulative profit or loss over time
 - Clean, table-first interface
-- Export all trade data to CSV
 - Support for multiple accounts or portfolios
+- Export all trade data to CSV
 - Runs locally with Docker
 - Optional hosted version for convenience
+
+---
+
+## Screenshots
+
+### Dashboard
+Overview of all accounts with P&L summaries, holdings, and recent activity.
+
+### Ledger
+Chronological trade log with filtering by account, asset, and entry type. Color-coded entries show gains (green) and losses (red).
+
+### Accounts
+Manage multiple trading accounts with individual P&L tracking.
 
 ---
 
@@ -66,9 +79,37 @@ make db-push
 ### Access the Application
 
 Once running:
-- **Client:** http://localhost:5173
-- **Server:** http://localhost:3000
+- **Frontend:** http://localhost:5173
+- **API:** http://localhost:3000
 - **Database:** localhost:5433
+
+---
+
+## Application Pages
+
+### Dashboard (`/`)
+- Account summary cards with P&L
+- Asset holdings per account
+- Recent ledger activity
+- Quick links to create accounts and assets
+
+### Accounts (`/accounts`)
+- List all trading accounts
+- Create, edit, archive, and delete accounts
+- View P&L per account
+- Toggle archived accounts visibility
+
+### Ledger (`/ledger`)
+- Chronological list of all ledger entries
+- Filter by account, asset, or entry type
+- Create new entries with auto-calculated values
+- Entry types: BUY, SELL, FEE, DEPOSIT, WITHDRAWAL, ADJUSTMENT
+- Edit and delete existing entries
+
+### Assets (`/assets`)
+- Manage tradeable assets (BTC, ETH, USD, etc.)
+- Set decimal precision per asset
+- Create, edit, and delete assets
 
 ---
 
@@ -125,11 +166,19 @@ make clean        # Stop containers and remove volumes
 mytradeledger/
 ├── client/                     # React frontend
 │   ├── src/
-│   │   ├── components/         # Reusable UI components
-│   │   ├── pages/              # Page components
-│   │   ├── services/           # API client functions
+│   │   ├── components/         # Shared UI components
+│   │   │   ├── Layout.tsx      # App shell with navigation
+│   │   │   ├── Modal.tsx       # Modal dialogs
+│   │   │   ├── ConfirmDialog.tsx
+│   │   │   └── ...
+│   │   ├── pages/              # Application pages
+│   │   │   ├── Dashboard/      # Home page with summaries
+│   │   │   ├── Accounts/       # Account management
+│   │   │   ├── Assets/         # Asset management
+│   │   │   └── Ledger/         # Trade log
+│   │   ├── services/           # API client
 │   │   ├── hooks/              # Custom React hooks
-│   │   └── types/              # TypeScript type definitions
+│   │   └── types/              # TypeScript definitions
 │   ├── package.json
 │   ├── vite.config.ts
 │   └── tailwind.config.js
@@ -139,12 +188,25 @@ mytradeledger/
 │   │   ├── routes/             # API route definitions
 │   │   ├── controllers/        # Request handlers
 │   │   ├── services/           # Business logic
-│   │   └── middleware/         # Express middleware
+│   │   ├── db/                 # Database client
+│   │   └── types/              # TypeScript definitions
 │   ├── prisma/
 │   │   └── schema.prisma       # Database schema
 │   └── package.json
 │
 ├── docker/                     # Docker configuration
+│   ├── client.Dockerfile
+│   ├── client.dev.Dockerfile
+│   ├── server.Dockerfile
+│   ├── server.dev.Dockerfile
+│   └── nginx.conf
+│
+├── docs/                       # Documentation
+│   ├── API.md                  # API reference
+│   ├── SCHEMA.md               # Database schema
+│   ├── SETUP.md                # Setup guide
+│   └── PROJECT.md              # Project definition
+│
 ├── docker-compose.yml          # Production deployment
 ├── docker-compose.dev.yml      # Development environment
 └── Makefile                    # Development commands
@@ -158,6 +220,21 @@ mytradeledger/
 - **Backend:** Node.js, Express, TypeScript
 - **Database:** PostgreSQL, Prisma ORM
 - **Runtime:** Docker, Docker Compose
+
+---
+
+## API Overview
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/accounts` | List all accounts |
+| `GET /api/accounts/:id/balance` | Get asset balances |
+| `GET /api/accounts/:id/pnl` | Get profit/loss |
+| `GET /api/assets` | List all assets |
+| `GET /api/ledger` | List ledger entries (with filters) |
+| `POST /api/ledger` | Create ledger entry |
+
+See [API Reference](docs/API.md) for complete documentation.
 
 ---
 
@@ -203,6 +280,7 @@ All trades can be exported to CSV using a stable, predictable format suitable fo
 ## Documentation
 
 - [Setup Guide](docs/SETUP.md) - Detailed setup and development instructions
+- [API Reference](docs/API.md) - REST API endpoints and contracts
 - [Database Schema](docs/SCHEMA.md) - Database design and entity definitions
 - [Project Definition](docs/PROJECT.md) - Project goals and specifications
 
@@ -225,11 +303,14 @@ MyTradeLedger is under active development. Features and structure may evolve, bu
 
 ## Roadmap (High-Level)
 
-- Initial self-hosted release
-- CSV export improvements
-- Hosted deployment
-- Basic authentication for hosted version
-- Ongoing usability refinements
+- [x] Core ledger functionality
+- [x] Account management
+- [x] Asset management
+- [x] P&L calculations
+- [ ] CSV export
+- [ ] Hosted deployment
+- [ ] Basic authentication for hosted version
+- [ ] Ongoing usability refinements
 
 ---
 

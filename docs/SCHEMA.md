@@ -66,6 +66,8 @@ This is the heart of MyTradeLedger. Each row represents a single financial event
 | `price` | Decimal(24,12)? | Price per unit in base currency (nullable) |
 | `value_base` | Decimal(24,12) | Total value in base currency (signed) |
 | `reference_asset_id` | UUID? | Foreign key to Asset (for exchanges between assets) |
+| `fee` | Decimal(24,12)? | Trading fee amount (typically in base currency or fee asset) |
+| `fee_asset_id` | UUID? | Foreign key to Asset (what asset the fee was paid in) |
 | `external_ref` | String? | Exchange order ID or reference |
 | `notes` | String? | User annotation |
 | `created_at` | DateTime | Creation timestamp |
