@@ -51,7 +51,7 @@ export function DashboardPage() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
           {hasEntries && (
-            <button className="btn btn-outline btn-sm" onClick={() => ledgerApi.exportCsv()}>
+            <button className="btn btn-outline" onClick={() => ledgerApi.exportCsv()}>
               Export CSV
             </button>
           )}
