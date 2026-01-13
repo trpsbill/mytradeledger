@@ -46,12 +46,19 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header with New Entry button */}
+      {/* Header with action buttons */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-          + New Entry
-        </button>
+        <div className="flex gap-2">
+          {hasEntries && (
+            <button className="btn btn-outline btn-sm" onClick={() => ledgerApi.exportCsv()}>
+              Export CSV
+            </button>
+          )}
+          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+            + New Entry
+          </button>
+        </div>
       </div>
 
       {/* Compact Account Summary */}

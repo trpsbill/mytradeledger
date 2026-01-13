@@ -5,6 +5,7 @@ const router = Router();
 
 // Ledger entries
 router.get('/', ledgerController.getAll);
+router.get('/export/csv', ledgerController.exportCsv);
 router.post('/', ledgerController.create);
 router.post('/batch', ledgerController.createBatch);
 router.post('/recalculate-pnl', ledgerController.recalculatePnL);

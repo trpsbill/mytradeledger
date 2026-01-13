@@ -21,8 +21,7 @@ All responses follow a consistent format:
 **Error Response:**
 ```json
 {
-  "error": "Error message",
-  "details": "Additional details (optional)"
+  "error": "Error message"
 }
 ```
 
@@ -44,155 +43,9 @@ Check API status.
 
 ---
 
-## Assets
-
-Assets represent tradeable currencies (crypto or fiat).
-
-### GET /assets
-
-List all assets.
-
-**Response:**
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "symbol": "BTC",
-      "name": "Bitcoin",
-      "precision": 8,
-      "createdAt": "2026-01-11T10:00:00.000Z"
-    }
-  ]
-}
-```
-
----
-
-### GET /assets/:id
-
-Get asset by ID.
-
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Asset UUID |
-
-**Response:**
-```json
-{
-  "data": {
-    "id": "uuid",
-    "symbol": "BTC",
-    "name": "Bitcoin",
-    "precision": 8,
-    "createdAt": "2026-01-11T10:00:00.000Z"
-  }
-}
-```
-
-**Errors:**
-- `404` - Asset not found
-
----
-
-### POST /assets
-
-Create a new asset.
-
-**Request Body:**
-```json
-{
-  "symbol": "BTC",
-  "name": "Bitcoin",
-  "precision": 8
-}
-```
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| symbol | string | Yes | - | Unique asset symbol (auto-uppercased) |
-| name | string | No | null | Human-readable name |
-| precision | integer | No | 8 | Decimal precision for quantities |
-
-**Response:** `201 Created`
-```json
-{
-  "data": {
-    "id": "uuid",
-    "symbol": "BTC",
-    "name": "Bitcoin",
-    "precision": 8,
-    "createdAt": "2026-01-11T10:00:00.000Z"
-  }
-}
-```
-
-**Errors:**
-- `400` - Symbol is required
-- `409` - Asset with this symbol already exists
-
----
-
-### PATCH /assets/:id
-
-Update an asset.
-
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Asset UUID |
-
-**Request Body:**
-```json
-{
-  "name": "Bitcoin Core",
-  "precision": 8
-}
-```
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | No | Human-readable name |
-| precision | integer | No | Decimal precision |
-
-**Response:**
-```json
-{
-  "data": {
-    "id": "uuid",
-    "symbol": "BTC",
-    "name": "Bitcoin Core",
-    "precision": 8,
-    "createdAt": "2026-01-11T10:00:00.000Z"
-  }
-}
-```
-
-**Errors:**
-- `404` - Asset not found
-
----
-
-### DELETE /assets/:id
-
-Delete an asset.
-
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Asset UUID |
-
-**Response:** `204 No Content`
-
-**Errors:**
-- `404` - Asset not found
-
----
-
 ## Accounts
 
-Accounts represent trading portfolios or exchange accounts.
+Accounts represent trading portfolios. A "Default" account is automatically created when you add your first trade.
 
 ### GET /accounts
 
@@ -209,7 +62,7 @@ List all accounts.
   "data": [
     {
       "id": "uuid",
-      "name": "Main Account",
+      "name": "Default",
       "baseCurrency": "USD",
       "createdAt": "2026-01-11T10:00:00.000Z",
       "archivedAt": null
@@ -224,17 +77,12 @@ List all accounts.
 
 Get account by ID.
 
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Account UUID |
-
 **Response:**
 ```json
 {
   "data": {
     "id": "uuid",
-    "name": "Main Account",
+    "name": "Default",
     "baseCurrency": "USD",
     "createdAt": "2026-01-11T10:00:00.000Z",
     "archivedAt": null
@@ -249,35 +97,18 @@ Get account by ID.
 
 ### GET /accounts/:id/balance
 
-Get asset balances for an account. Balances are derived from ledger entries.
-
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Account UUID |
+Get balances for an account, grouped by symbol.
 
 **Response:**
 ```json
 {
   "data": [
     {
-      "asset": {
-        "id": "uuid",
-        "symbol": "BTC",
-        "name": "Bitcoin",
-        "precision": 8,
-        "createdAt": "2026-01-11T10:00:00.000Z"
-      },
+      "symbol": "BTC/USD",
       "quantity": "1.5"
     },
     {
-      "asset": {
-        "id": "uuid",
-        "symbol": "ETH",
-        "name": "Ethereum",
-        "precision": 8,
-        "createdAt": "2026-01-11T10:00:00.000Z"
-      },
+      "symbol": "ETH/USD",
       "quantity": "10.0"
     }
   ]
@@ -291,12 +122,7 @@ Get asset balances for an account. Balances are derived from ledger entries.
 
 ### GET /accounts/:id/pnl
 
-Get total profit/loss for an account in base currency. P&L is derived from ledger entries.
-
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Account UUID |
+Get total profit/loss for an account in base currency.
 
 **Response:**
 ```json
@@ -332,17 +158,6 @@ Create a new account.
 | baseCurrency | string | No | "USD" | Base currency for P&L calculations |
 
 **Response:** `201 Created`
-```json
-{
-  "data": {
-    "id": "uuid",
-    "name": "Coinbase",
-    "baseCurrency": "USD",
-    "createdAt": "2026-01-11T10:00:00.000Z",
-    "archivedAt": null
-  }
-}
-```
 
 **Errors:**
 - `400` - Name is required
@@ -353,34 +168,11 @@ Create a new account.
 
 Update an account.
 
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Account UUID |
-
 **Request Body:**
 ```json
 {
   "name": "Coinbase Pro",
   "baseCurrency": "EUR"
-}
-```
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | No | Account name |
-| baseCurrency | string | No | Base currency |
-
-**Response:**
-```json
-{
-  "data": {
-    "id": "uuid",
-    "name": "Coinbase Pro",
-    "baseCurrency": "EUR",
-    "createdAt": "2026-01-11T10:00:00.000Z",
-    "archivedAt": null
-  }
 }
 ```
 
@@ -393,24 +185,6 @@ Update an account.
 
 Archive an account.
 
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Account UUID |
-
-**Response:**
-```json
-{
-  "data": {
-    "id": "uuid",
-    "name": "Old Account",
-    "baseCurrency": "USD",
-    "createdAt": "2026-01-11T10:00:00.000Z",
-    "archivedAt": "2026-01-15T10:00:00.000Z"
-  }
-}
-```
-
 **Errors:**
 - `404` - Account not found
 
@@ -419,24 +193,6 @@ Archive an account.
 ### POST /accounts/:id/unarchive
 
 Unarchive an account.
-
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Account UUID |
-
-**Response:**
-```json
-{
-  "data": {
-    "id": "uuid",
-    "name": "Restored Account",
-    "baseCurrency": "USD",
-    "createdAt": "2026-01-11T10:00:00.000Z",
-    "archivedAt": null
-  }
-}
-```
 
 **Errors:**
 - `404` - Account not found
@@ -447,11 +203,6 @@ Unarchive an account.
 
 Delete an account and all its ledger entries.
 
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Account UUID |
-
 **Response:** `204 No Content`
 
 **Errors:**
@@ -461,7 +212,7 @@ Delete an account and all its ledger entries.
 
 ## Ledger Entries
 
-Ledger entries are the core data model. Each entry represents a single financial event.
+Ledger entries are the core data model. Each entry represents a trade (buy or sell).
 
 ### Entry Types
 
@@ -469,10 +220,12 @@ Ledger entries are the core data model. Each entry represents a single financial
 |------|-------------|----------|------------|
 | BUY | Purchase of asset | Positive (+) | Negative (-) |
 | SELL | Sale of asset | Negative (-) | Positive (+) |
-| FEE | Fee payment | Negative (-) | Negative (-) |
-| DEPOSIT | Deposit into account | Positive (+) | Positive (+) |
-| WITHDRAWAL | Withdrawal from account | Negative (-) | Negative (-) |
-| ADJUSTMENT | Manual correction | Either | Either |
+
+### P&L Calculation
+
+For SELL entries, P&L is automatically calculated using the **average cost method**:
+- Average Cost = (Sum of all BUY costs for symbol) / (Total quantity bought)
+- P&L = (Sell Price - Average Cost) × Quantity Sold
 
 ---
 
@@ -483,9 +236,8 @@ List ledger entries with optional filters.
 **Query Parameters:**
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
-| accountId | string | - | Filter by account |
-| assetId | string | - | Filter by asset |
-| entryType | string | - | Filter by entry type |
+| symbol | string | - | Filter by symbol (partial match) |
+| entryType | string | - | Filter by entry type (BUY or SELL) |
 | startDate | string | - | Filter entries on or after date (ISO 8601) |
 | endDate | string | - | Filter entries on or before date (ISO 8601) |
 | limit | integer | 100 | Maximum entries to return |
@@ -500,40 +252,17 @@ List ledger entries with optional filters.
       "accountId": "uuid",
       "timestamp": "2026-01-11T10:00:00.000Z",
       "entryType": "BUY",
-      "assetId": "uuid",
+      "symbol": "BTC/USD",
       "quantity": "0.5",
       "price": "45000",
-      "valueBase": "-22500",
-      "referenceAssetId": "uuid",
       "fee": "22.50",
-      "feeAssetId": "uuid",
-      "externalRef": "order-123",
+      "valueBase": "-22500",
+      "pnl": null,
       "notes": "First BTC purchase",
       "createdAt": "2026-01-11T10:00:00.000Z",
-      "asset": {
-        "id": "uuid",
-        "symbol": "BTC",
-        "name": "Bitcoin",
-        "precision": 8,
-        "createdAt": "2026-01-11T10:00:00.000Z"
-      },
-      "referenceAsset": {
-        "id": "uuid",
-        "symbol": "USD",
-        "name": "US Dollar",
-        "precision": 2,
-        "createdAt": "2026-01-11T10:00:00.000Z"
-      },
-      "feeAsset": {
-        "id": "uuid",
-        "symbol": "USD",
-        "name": "US Dollar",
-        "precision": 2,
-        "createdAt": "2026-01-11T10:00:00.000Z"
-      },
       "account": {
         "id": "uuid",
-        "name": "Main Account",
+        "name": "Default",
         "baseCurrency": "USD",
         "createdAt": "2026-01-11T10:00:00.000Z",
         "archivedAt": null
@@ -554,11 +283,6 @@ List ledger entries with optional filters.
 
 Get ledger entry by ID.
 
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Ledger entry UUID |
-
 **Response:**
 ```json
 {
@@ -566,29 +290,17 @@ Get ledger entry by ID.
     "id": "uuid",
     "accountId": "uuid",
     "timestamp": "2026-01-11T10:00:00.000Z",
-    "entryType": "BUY",
-    "assetId": "uuid",
-    "quantity": "0.5",
-    "price": "45000",
-    "valueBase": "-22500",
-    "referenceAssetId": "uuid",
-    "fee": "22.50",
-    "feeAssetId": "uuid",
-    "externalRef": "order-123",
-    "notes": "First BTC purchase",
+    "entryType": "SELL",
+    "symbol": "BTC/USD",
+    "quantity": "-0.25",
+    "price": "50000",
+    "fee": "12.50",
+    "valueBase": "12500",
+    "pnl": "1250.00",
+    "notes": null,
     "createdAt": "2026-01-11T10:00:00.000Z",
-    "asset": { ... },
-    "referenceAsset": { ... },
-    "feeAsset": { ... },
     "account": { ... },
-    "metadata": [
-      {
-        "id": "uuid",
-        "ledgerEntryId": "uuid",
-        "key": "exchange",
-        "value": "coinbase"
-      }
-    ]
+    "metadata": []
   }
 }
 ```
@@ -600,73 +312,42 @@ Get ledger entry by ID.
 
 ### POST /ledger
 
-Create a new ledger entry.
+Create a new ledger entry. Account is automatically assigned to "Default" (created if needed).
 
 **Request Body:**
 ```json
 {
-  "accountId": "uuid",
-  "timestamp": "2026-01-11T10:00:00.000Z",
+  "symbol": "BTC/USD",
   "entryType": "BUY",
-  "assetId": "uuid",
   "quantity": "0.5",
   "price": "45000",
-  "valueBase": "-22500",
-  "referenceAssetId": "uuid",
   "fee": "22.50",
-  "feeAssetId": "uuid",
-  "externalRef": "order-123",
+  "timestamp": "2026-01-11T10:00:00.000Z",
   "notes": "First BTC purchase"
 }
 ```
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| accountId | string | Yes | Account UUID |
-| timestamp | string | Yes | Event timestamp (ISO 8601) |
-| entryType | string | Yes | BUY, SELL, FEE, DEPOSIT, WITHDRAWAL, or ADJUSTMENT |
-| assetId | string | Yes | Asset UUID |
-| quantity | string/number | Yes | Signed quantity (+ or -) |
-| price | string/number | No | Price per unit in base currency |
-| valueBase | string/number | Yes | Total value in base currency (signed) |
-| referenceAssetId | string | No | Reference asset UUID (for exchanges) |
+| symbol | string | Yes | Trading pair symbol (e.g., "BTC/USD", "ETH-USDT") |
+| entryType | string | Yes | BUY or SELL |
+| quantity | string/number | Yes | Quantity (always positive, sign is auto-calculated) |
+| price | string/number | Yes | Price per unit |
 | fee | string/number | No | Trading fee amount |
-| feeAssetId | string | No | Asset UUID for fee (e.g., USD, BTC) |
-| externalRef | string | No | External reference (e.g., exchange order ID) |
+| timestamp | string | No | Event timestamp (ISO 8601), defaults to now |
 | notes | string | No | User notes |
 
+**Auto-calculated fields:**
+- `valueBase` = quantity × price (negative for BUY, positive for SELL)
+- `pnl` = calculated for SELL entries using average cost method
+
 **Response:** `201 Created`
-```json
-{
-  "data": {
-    "id": "uuid",
-    "accountId": "uuid",
-    "timestamp": "2026-01-11T10:00:00.000Z",
-    "entryType": "BUY",
-    "assetId": "uuid",
-    "quantity": "0.5",
-    "price": "45000",
-    "valueBase": "-22500",
-    "referenceAssetId": "uuid",
-    "fee": "22.50",
-    "feeAssetId": "uuid",
-    "externalRef": "order-123",
-    "notes": "First BTC purchase",
-    "createdAt": "2026-01-11T10:00:00.000Z",
-    "asset": { ... },
-    "referenceAsset": { ... },
-    "feeAsset": { ... },
-    "account": { ... }
-  }
-}
-```
 
 **Errors:**
-- `400` - Missing required field
-- `400` - Invalid entryType
-- `400` - Account not found
-- `400` - Asset not found
-- `400` - Reference asset not found
+- `400` - symbol is required
+- `400` - entryType is required (must be BUY or SELL)
+- `400` - quantity must be a positive number
+- `400` - price must be a positive number
 
 ---
 
@@ -679,26 +360,16 @@ Create multiple ledger entries at once.
 {
   "entries": [
     {
-      "accountId": "uuid",
-      "timestamp": "2026-01-11T10:00:00.000Z",
+      "symbol": "BTC/USD",
       "entryType": "BUY",
-      "assetId": "uuid",
       "quantity": "0.5",
-      "price": "45000",
-      "valueBase": "-22500",
-      "fee": "22.50",
-      "feeAssetId": "uuid"
+      "price": "45000"
     },
     {
-      "accountId": "uuid",
-      "timestamp": "2026-01-11T11:00:00.000Z",
+      "symbol": "BTC/USD",
       "entryType": "SELL",
-      "assetId": "uuid",
-      "quantity": "-0.25",
-      "price": "46000",
-      "valueBase": "11500",
-      "fee": "11.50",
-      "feeAssetId": "uuid"
+      "quantity": "0.25",
+      "price": "50000"
     }
   ]
 }
@@ -720,44 +391,22 @@ Create multiple ledger entries at once.
 
 ### PATCH /ledger/:id
 
-Update a ledger entry.
-
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Ledger entry UUID |
+Update a ledger entry. P&L is recalculated for SELL entries.
 
 **Request Body:**
 ```json
 {
+  "symbol": "BTC/USD",
+  "entryType": "BUY",
+  "quantity": "0.6",
+  "price": "44000",
+  "fee": "20.00",
   "timestamp": "2026-01-11T11:00:00.000Z",
   "notes": "Updated notes"
 }
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| timestamp | string | No | Event timestamp |
-| entryType | string | No | Entry type |
-| assetId | string | No | Asset UUID |
-| quantity | string/number | No | Quantity |
-| price | string/number | No | Price (null to clear) |
-| valueBase | string/number | No | Value in base currency |
-| referenceAssetId | string | No | Reference asset (null to clear) |
-| fee | string/number | No | Trading fee (null to clear) |
-| feeAssetId | string | No | Fee asset UUID (null to clear) |
-| externalRef | string | No | External reference |
-| notes | string | No | Notes |
-
-**Response:**
-```json
-{
-  "data": {
-    "id": "uuid",
-    ...
-  }
-}
-```
+All fields are optional.
 
 **Errors:**
 - `400` - Invalid entryType
@@ -769,15 +418,42 @@ Update a ledger entry.
 
 Delete a ledger entry.
 
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Ledger entry UUID |
-
 **Response:** `204 No Content`
 
 **Errors:**
 - `404` - Ledger entry not found
+
+---
+
+### GET /ledger/export/csv
+
+Export all ledger entries to CSV format.
+
+**Query Parameters:**
+| Name | Type | Description |
+|------|------|-------------|
+| symbol | string | Filter by symbol |
+| entryType | string | Filter by entry type |
+| startDate | string | Filter by start date |
+| endDate | string | Filter by end date |
+
+**Response:** CSV file download with headers:
+`Date, Type, Symbol, Quantity, Price, Fee, Total, P&L, Notes`
+
+---
+
+### POST /ledger/recalculate-pnl
+
+Recalculate P&L for all existing SELL entries. Useful after importing data or fixing entries.
+
+**Response:**
+```json
+{
+  "data": {
+    "updated": 5
+  }
+}
+```
 
 ---
 
@@ -789,11 +465,6 @@ Attach key-value metadata to ledger entries.
 
 Get metadata for a ledger entry.
 
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Ledger entry UUID |
-
 **Response:**
 ```json
 {
@@ -803,30 +474,16 @@ Get metadata for a ledger entry.
       "ledgerEntryId": "uuid",
       "key": "exchange",
       "value": "coinbase"
-    },
-    {
-      "id": "uuid",
-      "ledgerEntryId": "uuid",
-      "key": "strategy",
-      "value": "dca"
     }
   ]
 }
 ```
-
-**Errors:**
-- `404` - Ledger entry not found
 
 ---
 
 ### POST /ledger/:id/metadata
 
 Add metadata to a ledger entry.
-
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Ledger entry UUID |
 
 **Request Body:**
 ```json
@@ -836,22 +493,7 @@ Add metadata to a ledger entry.
 }
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| key | string | Yes | Metadata key |
-| value | string | Yes | Metadata value |
-
 **Response:** `201 Created`
-```json
-{
-  "data": {
-    "id": "uuid",
-    "ledgerEntryId": "uuid",
-    "key": "exchange",
-    "value": "coinbase"
-  }
-}
-```
 
 **Errors:**
 - `400` - key and value are required
@@ -862,12 +504,6 @@ Add metadata to a ledger entry.
 ### DELETE /ledger/:id/metadata/:metadataId
 
 Delete a metadata entry.
-
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| id | string | Ledger entry UUID |
-| metadataId | string | Metadata entry UUID |
 
 **Response:** `204 No Content`
 
@@ -881,62 +517,40 @@ Delete a metadata entry.
 ### Record a BTC Purchase
 
 ```bash
-# 1. Create assets (if not exists)
-curl -X POST http://localhost:3000/api/assets \
-  -H "Content-Type: application/json" \
-  -d '{"symbol": "BTC", "name": "Bitcoin"}'
-
-curl -X POST http://localhost:3000/api/assets \
-  -H "Content-Type: application/json" \
-  -d '{"symbol": "USD", "name": "US Dollar", "precision": 2}'
-
-# 2. Create account
-curl -X POST http://localhost:3000/api/accounts \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Main Trading Account"}'
-
-# 3. Record the purchase with integrated fee (BUY 0.5 BTC at $45,000 with $22.50 fee)
 curl -X POST http://localhost:3000/api/ledger \
   -H "Content-Type: application/json" \
   -d '{
-    "accountId": "<account-uuid>",
-    "timestamp": "2026-01-11T10:00:00Z",
+    "symbol": "BTC/USD",
     "entryType": "BUY",
-    "assetId": "<btc-uuid>",
     "quantity": "0.5",
     "price": "45000",
-    "valueBase": "-22500",
-    "referenceAssetId": "<usd-uuid>",
     "fee": "22.50",
-    "feeAssetId": "<usd-uuid>"
+    "notes": "First BTC purchase"
   }'
 ```
 
 ### Record a BTC Sale
 
 ```bash
-# SELL 0.25 BTC at $50,000 with $12.50 fee
 curl -X POST http://localhost:3000/api/ledger \
   -H "Content-Type: application/json" \
   -d '{
-    "accountId": "<account-uuid>",
-    "timestamp": "2026-01-15T14:30:00Z",
+    "symbol": "BTC/USD",
     "entryType": "SELL",
-    "assetId": "<btc-uuid>",
-    "quantity": "-0.25",
+    "quantity": "0.25",
     "price": "50000",
-    "valueBase": "12500",
-    "referenceAssetId": "<usd-uuid>",
-    "fee": "12.50",
-    "feeAssetId": "<usd-uuid>"
+    "fee": "12.50"
   }'
 ```
 
 ### Query Ledger with Filters
 
 ```bash
-# Get all BUY entries for an account
-curl "http://localhost:3000/api/ledger?accountId=<uuid>&entryType=BUY"
+# Get all BUY entries
+curl "http://localhost:3000/api/ledger?entryType=BUY"
+
+# Get entries for a specific symbol
+curl "http://localhost:3000/api/ledger?symbol=BTC"
 
 # Get entries in a date range
 curl "http://localhost:3000/api/ledger?startDate=2026-01-01&endDate=2026-01-31"
@@ -945,12 +559,24 @@ curl "http://localhost:3000/api/ledger?startDate=2026-01-01&endDate=2026-01-31"
 curl "http://localhost:3000/api/ledger?limit=20&offset=40"
 ```
 
+### Export to CSV
+
+```bash
+curl -O http://localhost:3000/api/ledger/export/csv
+```
+
 ### Check Account Status
 
 ```bash
-# Get balances (derived from ledger)
+# Get balances (grouped by symbol)
 curl http://localhost:3000/api/accounts/<uuid>/balance
 
-# Get P&L (derived from ledger)
+# Get total P&L
 curl http://localhost:3000/api/accounts/<uuid>/pnl
+```
+
+### Recalculate P&L
+
+```bash
+curl -X POST http://localhost:3000/api/ledger/recalculate-pnl
 ```

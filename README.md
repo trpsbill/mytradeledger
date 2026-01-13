@@ -89,9 +89,9 @@ Once running:
 
 ### Dashboard (`/`)
 - Account summary cards with P&L
-- Asset holdings per account
-- Recent ledger activity
-- Quick links to create accounts and assets
+- Recent ledger activity with edit/delete
+- Add new trades directly from dashboard
+- Export to CSV
 
 ### Accounts (`/accounts`)
 - List all trading accounts
@@ -101,15 +101,11 @@ Once running:
 
 ### Ledger (`/ledger`)
 - Chronological list of all ledger entries
-- Filter by account, asset, or entry type
+- Filter by symbol or entry type
 - Create new entries with auto-calculated values
-- Entry types: BUY, SELL, FEE, DEPOSIT, WITHDRAWAL, ADJUSTMENT
+- Entry types: BUY, SELL
 - Edit and delete existing entries
-
-### Assets (`/assets`)
-- Manage tradeable assets (BTC, ETH, USD, etc.)
-- Set decimal precision per asset
-- Create, edit, and delete assets
+- P&L automatically calculated for SELL entries
 
 ---
 
@@ -172,10 +168,9 @@ mytradeledger/
 │   │   │   ├── ConfirmDialog.tsx
 │   │   │   └── ...
 │   │   ├── pages/              # Application pages
-│   │   │   ├── Dashboard/      # Home page with summaries
+│   │   │   ├── Dashboard/      # Home page with trade log
 │   │   │   ├── Accounts/       # Account management
-│   │   │   ├── Assets/         # Asset management
-│   │   │   └── Ledger/         # Trade log
+│   │   │   └── Ledger/         # Full ledger view
 │   │   ├── services/           # API client
 │   │   ├── hooks/              # Custom React hooks
 │   │   └── types/              # TypeScript definitions
@@ -228,11 +223,25 @@ mytradeledger/
 | Endpoint | Description |
 |----------|-------------|
 | `GET /api/accounts` | List all accounts |
-| `GET /api/accounts/:id/balance` | Get asset balances |
+| `GET /api/accounts/:id/balance` | Get balances by symbol |
 | `GET /api/accounts/:id/pnl` | Get profit/loss |
-| `GET /api/assets` | List all assets |
 | `GET /api/ledger` | List ledger entries (with filters) |
 | `POST /api/ledger` | Create ledger entry |
+| `GET /api/ledger/export/csv` | Export to CSV |
+
+### Example: Add a Trade
+
+```bash
+curl -X POST http://localhost:3000/api/ledger \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symbol": "BTC/USD",
+    "entryType": "BUY",
+    "quantity": "0.5",
+    "price": "45000",
+    "fee": "22.50"
+  }'
+```
 
 See [API Reference](docs/API.md) for complete documentation.
 
@@ -305,9 +314,9 @@ MyTradeLedger is under active development. Features and structure may evolve, bu
 
 - [x] Core ledger functionality
 - [x] Account management
-- [x] Asset management
-- [x] P&L calculations
-- [ ] CSV export
+- [x] P&L calculations (average cost method)
+- [x] CSV export
+- [x] Light/dark theme
 - [ ] Hosted deployment
 - [ ] Basic authentication for hosted version
 - [ ] Ongoing usability refinements

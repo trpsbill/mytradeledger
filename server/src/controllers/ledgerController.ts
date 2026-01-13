@@ -206,4 +206,24 @@ export const ledgerController = {
       res.status(500).json({ error: 'Failed to recalculate P&L' });
     }
   },
+
+  async exportCsv(req: Request, res: Response) {
+    try {
+      const params: LedgerQueryParams = {
+        symbol: req.query.symbol as string,
+        entryType: req.query.entryType as EntryType,
+        startDate: req.query.startDate as string,
+        endDate: req.query.endDate as string,
+      };
+
+      const csv = await ledgerService.exportToCsv(params);
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="ledger-export-${new Date().toISOString().split('T')[0]}.csv"`);
+      res.send(csv);
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      res.status(500).json({ error: 'Failed to export CSV' });
+    }
+  },
 };

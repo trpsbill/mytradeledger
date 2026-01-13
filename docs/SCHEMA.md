@@ -7,7 +7,7 @@ The database exists to record what actually happened, in the order it happened, 
 - The database does not infer, score, or label performance
 - It does not group rows into "trades"
 - Each row represents a real ledger event
-- All totals and PnL are derivable, not stored as magic numbers
+- All totals and PnL are derivable from the ledger
 
 Think **accounting ledger**, not analytics system.
 
@@ -17,12 +17,12 @@ Think **accounting ledger**, not analytics system.
 
 ### 1. Account
 
-Represents a logical trading account or portfolio.
+Represents a logical trading account or portfolio. A "Default" account is auto-created when the first trade is recorded.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | UUID | Unique identifier |
-| `name` | String | User-defined label (e.g. "Coinbase", "Paper", "Long-Term") |
+| `name` | String | User-defined label (e.g. "Default", "Coinbase") |
 | `base_currency` | String | Currency used for PnL calculations (default: USD) |
 | `created_at` | DateTime | Creation timestamp |
 | `archived_at` | DateTime? | Archive timestamp (nullable) |
@@ -33,42 +33,22 @@ Represents a logical trading account or portfolio.
 
 ---
 
-### 2. Asset
+### 2. Ledger Entry (Core Table)
 
-Represents a traded asset or currency.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | UUID | Unique identifier |
-| `symbol` | String | Unique symbol (e.g. BTC, ETH, USDC) |
-| `name` | String? | Optional human-readable name |
-| `precision` | Int | Decimal precision for quantities (default: 8) |
-| `created_at` | DateTime | Creation timestamp |
-
-**Notes:**
-- Assets include both crypto and fiat/base currencies
-- USD/USDC are treated the same as BTC from a modeling perspective
-
----
-
-### 3. Ledger Entry (Core Table)
-
-This is the heart of MyTradeLedger. Each row represents a single financial event.
+This is the heart of MyTradeLedger. Each row represents a single trade event.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | UUID | Unique identifier |
 | `account_id` | UUID | Foreign key to Account |
 | `timestamp` | DateTime | When the event occurred |
-| `entry_type` | Enum | BUY, SELL, FEE, DEPOSIT, WITHDRAWAL, ADJUSTMENT |
-| `asset_id` | UUID | Foreign key to Asset (what asset is affected) |
-| `quantity` | Decimal(24,12) | Signed value (+increase, -decrease) |
-| `price` | Decimal(24,12)? | Price per unit in base currency (nullable) |
-| `value_base` | Decimal(24,12) | Total value in base currency (signed) |
-| `reference_asset_id` | UUID? | Foreign key to Asset (for exchanges between assets) |
-| `fee` | Decimal(24,12)? | Trading fee amount (typically in base currency or fee asset) |
-| `fee_asset_id` | UUID? | Foreign key to Asset (what asset the fee was paid in) |
-| `external_ref` | String? | Exchange order ID or reference |
+| `entry_type` | Enum | BUY or SELL |
+| `symbol` | String | Trading pair symbol (e.g., "BTC/USD", "ETH-USDT") |
+| `quantity` | Decimal(24,12) | Signed value (+increase for BUY, -decrease for SELL) |
+| `price` | Decimal(24,12) | Price per unit |
+| `fee` | Decimal(24,12)? | Trading fee amount (nullable) |
+| `value_base` | Decimal(24,12) | Total value in base currency (auto-calculated) |
+| `pnl` | Decimal(24,12)? | Realized P&L for SELL entries (auto-calculated) |
 | `notes` | String? | User annotation |
 | `created_at` | DateTime | Creation timestamp |
 
@@ -78,10 +58,13 @@ This is the heart of MyTradeLedger. Each row represents a single financial event
 |------|----------------|---------------------|
 | BUY | Increases (+) | Decreases (-) |
 | SELL | Decreases (-) | Increases (+) |
-| FEE | Decreases (-) | Always negative |
-| DEPOSIT | Increases (+) | Increases (+) |
-| WITHDRAWAL | Decreases (-) | Decreases (-) |
-| ADJUSTMENT | Either | Either |
+
+#### Auto-Calculated Fields
+
+- **`value_base`**: `quantity × price` (negative for BUY, positive for SELL)
+- **`pnl`**: For SELL entries only, calculated using the average cost method:
+  - Average Cost = (Sum of all BUY costs for symbol) / (Total quantity bought)
+  - P&L = (Sell Price - Average Cost) × Quantity Sold
 
 **Important:**
 - A BUY and SELL are not paired
@@ -91,7 +74,7 @@ This is the heart of MyTradeLedger. Each row represents a single financial event
 
 ---
 
-### 4. Ledger Metadata (Optional)
+### 3. Ledger Metadata (Optional)
 
 Flexible key-value extension for ledger entries.
 
@@ -109,15 +92,19 @@ Flexible key-value extension for ledger entries.
 
 ---
 
-## Derived Concepts (Not Stored)
+### 4. Asset (Legacy)
 
-These values are **queries over ledger entries**, not first-class data:
+The Asset table exists for backward compatibility but is not used in the simplified model. Trading pairs are stored directly as a `symbol` string in ledger entries.
 
-- Current balance
-- Open positions
-- Average entry price
-- Profit or loss
-- Win/loss classification
+---
+
+## Derived Concepts (Queries, Not Stored)
+
+These values are **queries over ledger entries**:
+
+- **Current balance**: SUM of quantities grouped by symbol
+- **Total P&L**: SUM of valueBase for an account
+- **Realized P&L**: SUM of pnl field for SELL entries
 
 ---
 
@@ -126,18 +113,17 @@ These values are **queries over ledger entries**, not first-class data:
 - All ledger entries belong to exactly one account
 - Accounts are fully isolated
 - Cross-account aggregation is a UI concern, not a data concern
+- A "Default" account is auto-created for simplified single-account usage
 
 ---
 
 ## Export Expectations
 
-Ledger entries must be exportable with:
+Ledger entries are exportable to CSV with:
 
-- Stable column names
+- Stable column names: Date, Type, Symbol, Quantity, Price, Fee, Total, P&L, Notes
 - Chronological ordering
 - No hidden joins or transformations
-
-CSV export should closely resemble the ledger table itself.
 
 ---
 
@@ -147,7 +133,7 @@ CSV export should closely resemble the ledger table itself.
 |-----------|-------------|
 | Rows represent facts | Each entry is a real event that happened |
 | Time ordering matters | Chronology is the primary structure |
-| Nothing is inferred | No calculated fields stored |
+| Minimal inference | Only P&L is calculated (for convenience) |
 | Nothing is scored | No performance labels |
 | Nothing is hidden | Full transparency |
 | Totals are math, not data | All aggregates are derived |

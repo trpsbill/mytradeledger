@@ -5,6 +5,31 @@ import { CreateLedgerEntryRequest, UpdateLedgerEntryRequest, LedgerQueryParams }
 const DEFAULT_ACCOUNT_NAME = 'Default';
 
 export const ledgerService = {
+  // Export ledger entries to CSV format
+  async exportToCsv(params: LedgerQueryParams = {}) {
+    const { entries } = await this.findAll({ ...params, limit: 10000 });
+
+    const headers = ['Date', 'Type', 'Symbol', 'Quantity', 'Price', 'Fee', 'Total', 'P&L', 'Notes'];
+    const rows = entries.map(entry => [
+      new Date(entry.timestamp).toISOString(),
+      entry.entryType,
+      entry.symbol,
+      entry.quantity.toString(),
+      entry.price.toString(),
+      entry.fee?.toString() || '',
+      entry.valueBase.toString(),
+      entry.pnl?.toString() || '',
+      entry.notes || '',
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+
+    return csvContent;
+  },
+
   // Recalculate P&L for all existing SELL entries
   async recalculateAllPnL() {
     const sellEntries = await prisma.ledgerEntry.findMany({

@@ -95,4 +95,9 @@ export const ledgerApi = {
 
   delete: (id: string) =>
     request<void>(`/ledger/${id}`, { method: 'DELETE' }),
+
+  exportCsv: () => {
+    // Trigger download by opening the URL
+    window.open(`${API_BASE}/ledger/export/csv`, '_blank');
+  },
 };
