@@ -100,4 +100,7 @@ export const ledgerApi = {
     // Trigger download by opening the URL
     window.open(`${API_BASE}/ledger/export/csv`, '_blank');
   },
+
+  clearAll: () =>
+    request<ApiResponse<{ deleted: number }>>('/ledger/all', { method: 'DELETE' }),
 };

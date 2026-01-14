@@ -145,6 +145,49 @@ make clean        # Stop containers and remove volumes
 3. For dependency changes, run `make rebuild`
 4. For schema changes, run `make db-push`
 
+## Running Without Docker
+
+If you prefer to run the application locally without Docker, you'll need Node.js 18+ and a PostgreSQL database.
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL 16+ (running on port 5432 or 5433)
+- npm or yarn
+
+### Setup
+
+1. **Start PostgreSQL** and create the database:
+   ```bash
+   createdb mytradeledger
+   ```
+
+2. **Set up the server:**
+   ```bash
+   cd server
+   cp ../.env.example .env
+   # Edit .env to set DATABASE_URL to your PostgreSQL connection string
+   npm install
+   npx prisma db push
+   npm run dev
+   ```
+
+3. **Set up the client** (in a new terminal):
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
+
+4. **Access the application:**
+   - Client: http://localhost:5173
+   - API: http://localhost:3000
+
+The client defaults to proxying API requests to `http://localhost:3000`. If your server runs on a different port, set `VITE_API_URL` before starting the client:
+```bash
+VITE_API_URL=http://localhost:4000 npm run dev
+```
+
 ## Production Deployment
 
 ```bash
@@ -156,11 +199,37 @@ The application will be available at http://localhost:80.
 
 ## Environment Variables
 
+### Server Variables
+
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | Server port | 3000 |
-| `NODE_ENV` | Environment | development |
-| `DATABASE_URL` | PostgreSQL connection string | (set in docker-compose) |
+| `DATABASE_URL` | PostgreSQL connection string | (required) |
+| `PORT` | Server port | `3000` |
+| `NODE_ENV` | Environment mode | `development` |
+
+### Client Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_API_URL` | API server URL for dev proxy | `http://localhost:3000` |
+
+### Configuration by Environment
+
+**Docker (recommended):** Environment variables are pre-configured in `docker-compose.dev.yml`. No manual setup required.
+
+**Local development (without Docker):**
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example server/.env
+   ```
+
+2. For the client, the default `VITE_API_URL` is `http://localhost:3000`, which works for local development. If you need to override it, create `client/.env`:
+   ```bash
+   echo "VITE_API_URL=http://localhost:3000" > client/.env
+   ```
+
+See `.env.example` for all available options with detailed comments.
 
 ## API Endpoints
 

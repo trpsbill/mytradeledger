@@ -9,6 +9,7 @@ router.get('/export/csv', ledgerController.exportCsv);
 router.post('/', ledgerController.create);
 router.post('/batch', ledgerController.createBatch);
 router.post('/recalculate-pnl', ledgerController.recalculatePnL);
+router.delete('/all', ledgerController.deleteAll);
 router.get('/:id', ledgerController.getById);
 router.patch('/:id', ledgerController.update);
 router.delete('/:id', ledgerController.delete);

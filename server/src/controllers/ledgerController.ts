@@ -226,4 +226,14 @@ export const ledgerController = {
       res.status(500).json({ error: 'Failed to export CSV' });
     }
   },
+
+  async deleteAll(req: Request, res: Response) {
+    try {
+      const result = await ledgerService.deleteAll();
+      res.json({ data: { deleted: result.count } });
+    } catch (error) {
+      console.error('Error deleting all ledger entries:', error);
+      res.status(500).json({ error: 'Failed to delete ledger entries' });
+    }
+  },
 };

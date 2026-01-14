@@ -16,6 +16,7 @@ export function LedgerPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = useState<LedgerEntry | null>(null);
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
 
   // Filters from URL
   const symbolFilter = searchParams.get('symbol') || '';
@@ -62,6 +63,12 @@ export function LedgerPage() {
     refetch();
   };
 
+  const handleClearAll = async () => {
+    await ledgerApi.clearAll();
+    setShowClearAllConfirm(false);
+    refetch();
+  };
+
   const formatQuantity = (entry: LedgerEntry) => {
     const qty = parseFloat(entry.quantity);
     return Math.abs(qty).toFixed(8).replace(/\.?0+$/, '');
@@ -90,9 +97,19 @@ export function LedgerPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Ledger</h1>
-        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-          New Entry
-        </button>
+        <div className="flex gap-2">
+          {entries && entries.length > 0 && (
+            <button
+              className="btn btn-outline btn-error"
+              onClick={() => setShowClearAllConfirm(true)}
+            >
+              Clear All
+            </button>
+          )}
+          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+            New Entry
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -248,6 +265,16 @@ export function LedgerPage() {
         title="Delete Entry"
         message="Are you sure you want to delete this ledger entry? This action cannot be undone."
         confirmLabel="Delete"
+        variant="danger"
+      />
+
+      <ConfirmDialog
+        isOpen={showClearAllConfirm}
+        onClose={() => setShowClearAllConfirm(false)}
+        onConfirm={handleClearAll}
+        title="Clear All Entries"
+        message={`Are you sure you want to delete all ${meta?.total ?? entries?.length ?? 0} ledger entries? This action cannot be undone.`}
+        confirmLabel="Clear All"
         variant="danger"
       />
     </div>

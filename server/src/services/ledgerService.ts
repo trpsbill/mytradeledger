@@ -295,4 +295,11 @@ export const ledgerService = {
       where: { id },
     });
   },
+
+  async deleteAll() {
+    // Delete all metadata first (foreign key constraint)
+    await prisma.ledgerMetadata.deleteMany({});
+    // Then delete all ledger entries
+    return prisma.ledgerEntry.deleteMany({});
+  },
 };
