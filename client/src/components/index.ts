@@ -1,6 +1,15 @@
 export { Layout } from './Layout';
+export { AppNavbar } from './AppNavbar';
 export { LoadingSpinner } from './LoadingSpinner';
 export { ErrorAlert } from './ErrorAlert';
 export { EmptyState } from './EmptyState';
 export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
+export { ProtectedRoute } from './ProtectedRoute';
+export { EmailVerificationBanner } from './EmailVerificationBanner';
+export { PnlCell } from './PnlCell';
+export { SessionTimeoutWarning } from './SessionTimeoutWarning';
+export { FreeTierWarning } from './FreeTierWarning';
+export { DemoAccountModal } from './DemoAccountModal';
+export { DemoUpsellModal } from './DemoUpsellModal';
+export { Pagination, PageNavigator } from './Pagination';

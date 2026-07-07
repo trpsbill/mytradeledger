@@ -10,6 +10,12 @@ interface UseApiResult<T> extends UseApiState<T> {
   refetch: () => void;
 }
 
+export interface PaginationMeta {
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export function useApi<T>(
   fetcher: () => Promise<{ data: T }>,
   deps: unknown[] = []
@@ -32,6 +38,7 @@ export function useApi<T>(
         error: err instanceof Error ? err.message : 'An error occurred',
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   useEffect(() => {
@@ -39,4 +46,39 @@ export function useApi<T>(
   }, [fetchData]);
 
   return { ...state, refetch: fetchData };
+}
+
+export function useApiWithMeta<T>(
+  fetcher: () => Promise<{ data: T; meta?: PaginationMeta }>,
+  deps: unknown[] = []
+): UseApiResult<T> & { meta: PaginationMeta | null } {
+  const [state, setState] = useState<UseApiState<T>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setState((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const response = await fetcher();
+      setMeta(response.meta ?? null);
+      setState({ data: response.data, loading: false, error: null });
+    } catch (err) {
+      setMeta(null);
+      setState({
+        data: null,
+        loading: false,
+        error: err instanceof Error ? err.message : 'An error occurred',
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { ...state, refetch: fetchData, meta };
 }

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "is_demo" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "demo_expires_at" TIMESTAMP(3);

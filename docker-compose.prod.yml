@@ -1,0 +1,72 @@
+services:
+  traefik:
+    image: traefik:v2.11
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.le.acme.httpchallenge=true"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.le.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.le.acme.storage=/acme/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme_data:/acme
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+      dockerfile: ../docker/server.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      # Traefik -> nginx (client) -> server == 2 proxies in front of Express.
+      TRUST_PROXY: 2
+    depends_on:
+      db:
+        condition: service_healthy
+
+  client:
+    build:
+      context: .
+      dockerfile: docker/client.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - server
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mytradeledger.rule=Host(`mytradeledger.com`)"
+      - "traefik.http.routers.mytradeledger.entrypoints=websecure"
+      - "traefik.http.routers.mytradeledger.tls=true"
+      - "traefik.http.routers.mytradeledger.tls.certresolver=le"
+      - "traefik.http.services.mytradeledger.loadbalancer.server.port=80"
+
+volumes:
+  postgres_data:
+  acme_data:

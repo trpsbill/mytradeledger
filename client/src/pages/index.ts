@@ -1,3 +1,15 @@
+export { HomePage } from './Home';
+export { SignupPage } from './Signup';
+export { LoginPage } from './Login';
+export { ForgotPasswordPage } from './ForgotPassword';
+export { ResetPasswordPage } from './ResetPassword';
+export { VerifyEmailPage } from './VerifyEmail';
 export { DashboardPage } from './Dashboard';
 export { AccountsPage } from './Accounts';
 export { LedgerPage } from './Ledger';
+export { DocsLayout } from './Docs';
+export { ApiTokensPage } from './Settings/ApiTokensPage';
+export { AccountPage } from './Settings/AccountPage';
+export { TermsPage } from './Terms';
+export { PrivacyPage } from './Privacy';
+export { RefundPage } from './Refund/RefundPage';

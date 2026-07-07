@@ -7,16 +7,91 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String    @map("password_hash")
+  marketingOptIn  Boolean   @default(false) @map("marketing_opt_in")
+  isPaid                Boolean   @default(false) @map("is_paid")
+  hasHitFreeLimit       Boolean   @default(false) @map("has_hit_free_limit")
+  stripeCustomerId      String?   @map("stripe_customer_id")
+  stripeSubscriptionId  String?   @map("stripe_subscription_id")
+  emailVerifiedAt       DateTime? @map("email_verified_at") // null = email address not yet verified
+  isDemo                Boolean   @default(false) @map("is_demo")
+  demoExpiresAt         DateTime? @map("demo_expires_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  accounts                 Account[]
+  personalAccessTokens     PersonalAccessToken[]
+  passwordResetTokens      PasswordResetToken[]
+  emailVerificationTokens  EmailVerificationToken[]
+
+  @@map("user")
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("email_verification_token")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("password_reset_token")
+}
+
+model PersonalAccessToken {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  name          String
+  tokenHash     String    @unique @map("token_hash")
+  tokenPrefix   String    @map("token_prefix")
+  lastFourChars String    @map("last_four_chars")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  lastUsedAt    DateTime? @map("last_used_at")
+  expiresAt     DateTime? @map("expires_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("personal_access_token")
+}
+
 // Represents a logical trading account or portfolio
 model Account {
   id           String    @id @default(uuid())
+  userId       String    @map("user_id")
   name         String
   baseCurrency String    @default("USD") @map("base_currency")
+  isDemo       Boolean   @default(false) @map("is_demo")
+  isDefault    Boolean   @default(false) @map("is_default")
   createdAt    DateTime  @default(now()) @map("created_at")
   archivedAt   DateTime? @map("archived_at")
 
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   ledgerEntries LedgerEntry[]
 
+  @@index([userId])
   @@map("account")
 }
 
@@ -55,13 +130,15 @@ model LedgerEntry {
 
   entryType EntryType @map("entry_type")
 
-  symbol   String   // Trading pair symbol (e.g., "BTC/USD", "ETH-USDT")
-  quantity Decimal  @db.Decimal(24, 12) // Signed: positive = increase, negative = decrease
-  price    Decimal  @db.Decimal(24, 12) // Price per unit
+  symbol   String  // Trading pair symbol (e.g., "BTC/USD", "ETH-USDT")
+  quantity Decimal @db.Decimal(24, 12) // Signed: positive = increase, negative = decrease
+  price    Decimal @db.Decimal(24, 12) // Price per unit
   fee      Decimal? @db.Decimal(24, 12) // Trading fee amount (optional)
 
   valueBase Decimal  @db.Decimal(24, 12) @map("value_base") // Total value in base currency (signed, auto-calculated)
   pnl       Decimal? @db.Decimal(24, 12) // Realized P&L for SELL entries (using average cost method)
+  netPnl    Decimal? @db.Decimal(24, 12) @map("net_pnl") // Realized net P&L (fee-inclusive cost basis)
+  pnlStatus String?  @map("pnl_status") // null = normal; "PNL_UNCOMPUTABLE" = could not be costed
 
   // Legacy fields - kept for backward compatibility
   assetId          String? @map("asset_id")

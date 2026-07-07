@@ -23,6 +23,7 @@ help:
 	@echo "  db-migrate   Run Prisma migrations"
 	@echo "  db-push      Push schema to database (dev)"
 	@echo "  db-studio    Open Prisma Studio"
+	@echo "  pgadmin      Show pgAdmin URL (http://localhost:5050)"
 	@echo "  db-reset     Reset database (WARNING: deletes data)"
 	@echo ""
 	@echo "Shell Access:"
@@ -71,6 +72,9 @@ db-push:
 db-studio:
 	@echo "Starting Prisma Studio on http://localhost:5555"
 	docker compose -f docker-compose.dev.yml exec server npx prisma studio
+
+pgadmin:
+	@echo "pgAdmin running at http://localhost:5050 (trpsbill@gmail.com / admin)"
 
 db-reset:
 	@echo "WARNING: This will delete all data!"
