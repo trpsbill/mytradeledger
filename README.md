@@ -83,7 +83,7 @@ make db-migrate
 
 Once running:
 - **Frontend:** http://localhost:5173
-- **API:** http://localhost:3002 (container listens on 3000 — see `docker-compose.yml` for the host mapping)
+- **API:** http://localhost:3000
 - **Database:** localhost:5433
 
 ---
@@ -249,7 +249,7 @@ session JWT or a personal access token from Settings → API Tokens.
 ### Example: Add a Trade
 
 ```bash
-curl -X POST http://localhost:3002/api/ledger \
+curl -X POST http://localhost:3000/api/ledger \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -281,7 +281,7 @@ See [API Reference](docs/API.md) for complete documentation, or the live docs at
 docker compose up --build -d
 ```
 
-The client is reachable on `:5173` and the API on `:3002` (see `docker-compose.yml` for the exact
+The client is reachable on `:5173` and the API on `:3000` (see `docker-compose.yml` for the exact
 port mappings). Put your own reverse proxy (nginx, Caddy, Traefik) in front if you want a domain
 name or TLS — nothing in this repo assumes one.
 

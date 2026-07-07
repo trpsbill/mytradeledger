@@ -20,7 +20,7 @@ docker compose up
 
 Once running:
 - **Client:** http://localhost:5173
-- **Server:** http://localhost:3002 (see `docker-compose.yml` — the container listens on 3000, mapped to host port 3002)
+- **Server:** http://localhost:3000
 - **Database:** localhost:5433 (internal: 5432)
 
 ## Project Structure
@@ -135,7 +135,7 @@ make clean        # Stop containers and remove volumes
 
 3. **Open in browser:**
    - Client: http://localhost:5173
-   - API: http://localhost:3002/api/health
+   - API: http://localhost:3000/api/health
 
 ## Development Workflow
 
@@ -194,7 +194,7 @@ VITE_API_URL=http://localhost:4000 npm run dev
 docker compose up --build -d
 ```
 
-The client is reachable on `:5173` and the API on `:3002`. Put your own reverse proxy (nginx, Caddy,
+The client is reachable on `:5173` and the API on `:3000`. Put your own reverse proxy (nginx, Caddy,
 Traefik) in front if you want a domain name or TLS — nothing in this repo assumes one.
 
 ## Environment Variables
