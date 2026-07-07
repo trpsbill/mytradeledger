@@ -122,7 +122,7 @@ export function CsvExportPage() {
           Example — Full Export
         </h2>
         <pre className="bg-neutral text-neutral-content rounded-md p-4 text-xs overflow-x-auto font-mono leading-relaxed">{`curl -H "Authorization: Bearer $TOKEN" \\
-  "https://mytradeledger.home.arpa/api/ledger/export/csv" \\
+  "http://localhost:3000/api/ledger/export/csv" \\
   -o ledger-full.csv`}</pre>
       </section>
 
@@ -131,7 +131,7 @@ export function CsvExportPage() {
           Example — Filtered by Symbol and Year
         </h2>
         <pre className="bg-neutral text-neutral-content rounded-md p-4 text-xs overflow-x-auto font-mono leading-relaxed">{`curl -H "Authorization: Bearer $TOKEN" \\
-  "https://mytradeledger.home.arpa/api/ledger/export/csv?symbol=BTC%2FUSD&startDate=2025-01-01&endDate=2025-12-31" \\
+  "http://localhost:3000/api/ledger/export/csv?symbol=BTC%2FUSD&startDate=2025-01-01&endDate=2025-12-31" \\
   -o btc-2025.csv`}</pre>
         <p className="text-xs text-base-content/50 mt-2">
           Note: URL-encode the slash in symbols — <code>BTC/USD</code> becomes <code>BTC%2FUSD</code>.

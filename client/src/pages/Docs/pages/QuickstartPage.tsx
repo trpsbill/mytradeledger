@@ -23,20 +23,21 @@ export function QuickstartPage() {
       <h1 className="text-3xl font-bold text-base-content mb-3">Quick Start</h1>
       <p className="text-base-content/70 text-lg leading-relaxed mb-8">
         From zero to your first realized P&amp;L in five steps. This walkthrough assumes you have
-        access to the app at{' '}
-        <code className="text-sm bg-base-200 px-1.5 py-0.5 rounded">mytradeledger.home.arpa</code>.
+        your own instance running — see the{' '}
+        <Link to="/docs" className="text-primary hover:underline">setup guide</Link> if you haven't
+        started it yet.
       </p>
 
       <div className="mb-10">
         <Step number={1} title="Create your account">
           <p>
             Navigate to <strong>Sign Up</strong> on the home page. Enter your email address and
-            choose a password of at least 8 characters. The <em>Marketing opt-in</em> checkbox is
-            optional — leave it unchecked if you prefer not to receive product updates.
+            choose a password of at least 8 characters.
           </p>
           <p>
-            After registering you will be issued a JWT token and logged in automatically. This token
-            is valid for 30 days.
+            After registering you will be issued a session token and logged in automatically. The
+            session refreshes automatically while you're active and expires after a period of
+            inactivity.
           </p>
           <Callout type="info">
             If you already have an account, click <strong>Log In</strong> instead.

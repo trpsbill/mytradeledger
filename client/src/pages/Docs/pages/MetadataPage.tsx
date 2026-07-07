@@ -83,7 +83,7 @@ export function MetadataPage() {
               List metadata for an entry
             </p>
             <pre className="bg-neutral text-neutral-content rounded-md p-3 text-xs font-mono overflow-x-auto">{`curl -H "Authorization: Bearer $TOKEN" \\
-  https://mytradeledger.home.arpa/api/ledger/{entryId}/metadata`}</pre>
+  http://localhost:3000/api/ledger/{entryId}/metadata`}</pre>
             <pre className="bg-base-200 rounded-md p-3 text-xs font-mono mt-2 overflow-x-auto">{`{
   "data": [
     { "id": "meta-uuid-1", "key": "orderId", "value": "ORD-8821" },
@@ -100,7 +100,7 @@ export function MetadataPage() {
   -H "Authorization: Bearer $TOKEN" \\
   -H "Content-Type: application/json" \\
   -d '{"key": "orderId", "value": "ORD-8821"}' \\
-  https://mytradeledger.home.arpa/api/ledger/{entryId}/metadata`}</pre>
+  http://localhost:3000/api/ledger/{entryId}/metadata`}</pre>
           </div>
 
           <div>
@@ -109,7 +109,7 @@ export function MetadataPage() {
             </p>
             <pre className="bg-neutral text-neutral-content rounded-md p-3 text-xs font-mono overflow-x-auto">{`curl -X DELETE \\
   -H "Authorization: Bearer $TOKEN" \\
-  https://mytradeledger.home.arpa/api/ledger/{entryId}/metadata/{metadataId}`}</pre>
+  http://localhost:3000/api/ledger/{entryId}/metadata/{metadataId}`}</pre>
           </div>
         </div>
       </section>

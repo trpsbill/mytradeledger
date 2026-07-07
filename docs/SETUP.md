@@ -15,7 +15,7 @@ This project uses a **Docker-first** development approach. No local Node.js inst
 make dev
 
 # Or without make:
-docker compose -f docker-compose.dev.yml up
+docker compose up
 ```
 
 Once running:
@@ -62,8 +62,7 @@ mytradeledger/
 │   ├── server.dev.Dockerfile   # Development server
 │   └── nginx.conf              # Production nginx config
 │
-├── docker-compose.yml          # Production deployment
-├── docker-compose.dev.yml      # Development environment
+├── docker-compose.yml          # Everything you need (make up)
 ├── Makefile                    # Development commands
 └── .gitignore
 ```
@@ -165,7 +164,7 @@ If you prefer to run the application locally without Docker, you'll need Node.js
 2. **Set up the server:**
    ```bash
    cd server
-   cp ../.env.example .env
+   cp .env.example .env
    # Edit .env to set DATABASE_URL to your PostgreSQL connection string
    npm install
    npx prisma db push
@@ -188,14 +187,15 @@ The client defaults to proxying API requests to `http://localhost:3000`. If your
 VITE_API_URL=http://localhost:4000 npm run dev
 ```
 
-## Production Deployment
+## Running It Long-Term
 
 ```bash
-# Build and start production containers
+# Build and start in the background
 docker compose up --build -d
 ```
 
-The application will be available at http://localhost:80.
+The client listens on `:5173` and the API on `:3000`. Put your own reverse proxy (nginx, Caddy,
+Traefik) in front if you want a domain name or TLS — nothing in this repo assumes one.
 
 ## Environment Variables
 
@@ -227,13 +227,13 @@ See `server/.env.example` for the full list with detailed comments.
 
 ### Configuration by Environment
 
-**Docker (recommended):** Environment variables are pre-configured in `docker-compose.dev.yml`. No manual setup required.
+**Docker (recommended):** Copy `.env.example` to `.env` at the repo root — `docker-compose.yml` reads it via `${VAR}` substitution.
 
 **Local development (without Docker):**
 
 1. Copy the example environment file:
    ```bash
-   cp .env.example server/.env
+   cp server/.env.example server/.env
    ```
 
 2. For the client, the default `VITE_API_URL` is `http://localhost:3000`, which works for local development. If you need to override it, create `client/.env`:

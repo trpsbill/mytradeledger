@@ -46,21 +46,10 @@ describe('HomePage footer', () => {
     expect(screen.getByText(/© 2026 Treasoro LLC\. All rights reserved\./i)).toBeInTheDocument();
   });
 
-  it('renders Privacy Policy link', () => {
-    renderHomePage();
-    expect(screen.getByRole('link', { name: 'Privacy Policy' })).toBeInTheDocument();
-  });
-
-  it('renders Privacy Policy as an internal link to /privacy', () => {
-    renderHomePage();
-    const link = screen.getByRole('link', { name: 'Privacy Policy' });
-    expect(link).toHaveAttribute('href', '/privacy');
-    expect(link).not.toHaveAttribute('target', '_blank');
-  });
-
-  it('does not render a Terms of Service or Cancellation Policy link', () => {
+  it('does not render a Terms of Service, Privacy Policy, or Cancellation Policy link', () => {
     renderHomePage();
     expect(screen.queryByRole('link', { name: 'Terms of Service' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Privacy Policy' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Cancellation Policy' })).not.toBeInTheDocument();
   });
 });

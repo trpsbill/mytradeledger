@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-
 import { AuthProvider } from './contexts/AuthContext';
 import { Layout } from './components';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { HomePage, SignupPage, LoginPage, DashboardPage, AccountsPage, LedgerPage, DocsLayout, ApiTokensPage, PrivacyPage } from './pages';
+import { HomePage, SignupPage, LoginPage, DashboardPage, AccountsPage, LedgerPage, DocsLayout, ApiTokensPage } from './pages';
 import { OverviewPage } from './pages/Docs/pages/OverviewPage';
 import { QuickstartPage } from './pages/Docs/pages/QuickstartPage';
 import { ConceptsPage } from './pages/Docs/pages/ConceptsPage';
@@ -29,7 +29,6 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
 
           {/* Redirect legacy /app/docs/* URLs to the public /docs route */}
           <Route path="/app/docs" element={<Navigate to="/docs" replace />} />

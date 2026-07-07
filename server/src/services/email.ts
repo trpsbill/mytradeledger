@@ -71,8 +71,9 @@ export async function sendEmail({ to, toName, subject, text, html, replyTo }: Se
 }
 
 /**
- * Forwards a user-submitted support request to support@mytradeledger.com,
- * with Reply-To set to the submitting user's email so staff can reply directly.
+ * Forwards a user-submitted support request to SUPPORT_EMAIL (the operator's
+ * own inbox — configure this to your own address), with Reply-To set to the
+ * submitting user's email so you can reply directly.
  */
 export async function sendSupportEmail({
   fromEmail,
@@ -139,7 +140,7 @@ export async function sendSupportEmail({
   `;
 
   await sendEmail({
-    to: 'support@mytradeledger.com',
+    to: process.env.SUPPORT_EMAIL || process.env.MJ_FROM_EMAIL || 'support@example.com',
     toName: 'MyTradeLedger Support',
     subject: `[Support] ${subject}`,
     text,

@@ -1,7 +1,7 @@
 import { ApiEndpoint } from '../../components/ApiEndpoint';
 import { Callout } from '../../components/Callout';
 
-const BASE = 'https://mytradeledger.home.arpa/api';
+const BASE = `${window.location.origin}/api`;
 
 export function AssetsApiPage() {
   return (

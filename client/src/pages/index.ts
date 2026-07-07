@@ -6,4 +6,3 @@ export { AccountsPage } from './Accounts';
 export { LedgerPage } from './Ledger';
 export { DocsLayout } from './Docs';
 export { ApiTokensPage } from './Settings/ApiTokensPage';
-export { PrivacyPage } from './Privacy';

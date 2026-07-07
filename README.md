@@ -66,7 +66,7 @@ cd mytradeledger
 make dev
 
 # Or without make:
-docker compose -f docker-compose.dev.yml up
+docker compose up
 ```
 
 ### Initialize the Database
@@ -209,8 +209,7 @@ mytradeledger/
 │   ├── SETUP.md                # Setup guide
 │   └── PROJECT.md              # Project definition
 │
-├── docker-compose.yml          # Production deployment
-├── docker-compose.dev.yml      # Development environment
+├── docker-compose.yml          # Everything you need (make up)
 └── Makefile                    # Development commands
 ```
 
@@ -269,14 +268,16 @@ See [API Reference](docs/API.md) for complete documentation, or the live docs at
 
 ---
 
-## Production Deployment
+## Running It Long-Term
 
 ```bash
-# Build and start production containers
+# Build and start in the background
 docker compose up --build -d
 ```
 
-The application will be available at http://localhost:80.
+The client listens on `:5173` and the API on `:3000` (see `docker-compose.yml` for the exact port
+mappings). Put your own reverse proxy (nginx, Caddy, Traefik) in front if you want a domain name or
+TLS — nothing in this repo assumes one.
 
 ---
 

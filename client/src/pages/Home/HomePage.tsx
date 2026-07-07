@@ -12,7 +12,6 @@ const AI_SKILL_URL = 'https://github.com/trpsbill/skills/tree/main/skills/mytrad
 const FOUNDER_URL = 'https://www.tiktok.com/@mytradeledger';
 const X_URL = 'https://x.com/MyTradeLedgerAp';
 const TIKTOK_URL = FOUNDER_URL;
-const PRIVACY_URL = '/privacy';
 
 const homeNavLinks = [
   { label: 'Docs',   to: '/docs',    external: false },
@@ -123,7 +122,7 @@ function CurlSnippet() {
         <div style={{ color: textMuted }}># Fetch your trade history — returns paginated JSON</div>
         <div>
           <span style={{ color: '#79c0ff' }}>curl</span>
-          <span style={{ color: textPrimary }}> -s https://mytradeledger.com/api/ledger \</span>
+          <span style={{ color: textPrimary }}> -s https://your-instance.example.com/api/ledger \</span>
         </div>
         <div className="pl-4">
           <span style={{ color: '#79c0ff' }}>-H</span>
@@ -203,14 +202,14 @@ export function HomePage() {
       el.setAttribute('content', content);
     };
 
-    const desc = 'A private, open-source crypto trade ledger with a real API and CSV export. Track buys, sells, and realized P&L. Self-host it free or use the hosted version.';
+    const desc = 'A private, open-source, self-hosted crypto trade ledger with a real API and CSV export. Track buys, sells, and realized P&L.';
     const title = 'MyTradeLedger — Private Crypto Trade Journal & P&L Tracker';
 
     setMeta('description', desc);
     setMeta('og:title', title, true);
     setMeta('og:description', desc, true);
     setMeta('og:type', 'website', true);
-    setMeta('og:url', 'https://mytradeledger.com', true);
+    setMeta('og:url', window.location.origin, true);
     setMeta('twitter:card', 'summary');
     setMeta('twitter:title', title);
     setMeta('twitter:description', desc);
@@ -770,7 +769,6 @@ export function HomePage() {
             {[
               { label: 'Docs',    to: '/docs',       external: false },
               { label: 'GitHub',  to: GITHUB_URL,    external: true  },
-              { label: 'Privacy Policy',  to: PRIVACY_URL, external: false },
               { label: 'Log In',  to: '/login',      external: false },
             ].map(({ label, to, external }) =>
               external ? (
