@@ -1,6 +1,7 @@
 # MyTradeLedger — API Overview
 
-Base URL: `http://localhost:3000/api` (dev) or your own host in production.
+Base URL: `http://localhost:3002/api` by default via `docker compose up` (see `docker-compose.yml`
+for the host port mapping), or whatever host/port you've deployed to.
 
 > **Full reference:** the running app serves complete, always-current API docs (with request/response
 > examples and curl snippets) at `/docs/api/*` — Authentication, Accounts, Ledger, Assets. This file is a
@@ -57,19 +58,19 @@ P&L on SELL entries is calculated automatically using the average-cost method; s
 
 ```bash
 # Register + capture the session token
-TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/register \
+TOKEN=$(curl -s -X POST http://localhost:3002/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"you@example.com","password":"securepass1"}' | jq -r .data.token)
 
 # Record a BUY
-curl -X POST http://localhost:3000/api/ledger \
+curl -X POST http://localhost:3002/api/ledger \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"symbol":"BTC/USD","entryType":"BUY","quantity":"0.5","price":"45000","fee":"22.50"}'
 
 # List entries, filtered and paginated
-curl "http://localhost:3000/api/ledger?entryType=BUY&limit=20&offset=0" \
+curl "http://localhost:3002/api/ledger?entryType=BUY&limit=20&offset=0" \
   -H "Authorization: Bearer $TOKEN"
 
 # Export to CSV
-curl -H "Authorization: Bearer $TOKEN" -O http://localhost:3000/api/ledger/export/csv
+curl -H "Authorization: Bearer $TOKEN" -O http://localhost:3002/api/ledger/export/csv
 ```

@@ -16,7 +16,9 @@ export default defineConfig({
   server: {
     port: 5173,
     host: '0.0.0.0',
-    allowedHosts: ['mytradeledger.home.arpa'],
+    // Self-hosters may front this with their own reverse proxy under any
+    // domain name, so there's no fixed allowlist here.
+    allowedHosts: true,
     proxy: {
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:3000',
