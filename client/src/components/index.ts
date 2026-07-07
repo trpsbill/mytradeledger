@@ -6,7 +6,6 @@ export { EmptyState } from './EmptyState';
 export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
 export { ProtectedRoute } from './ProtectedRoute';
-export { EmailVerificationBanner } from './EmailVerificationBanner';
 export { PnlCell } from './PnlCell';
 export { SessionTimeoutWarning } from './SessionTimeoutWarning';
 export { DemoAccountModal } from './DemoAccountModal';

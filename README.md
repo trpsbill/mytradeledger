@@ -14,7 +14,7 @@ The project is designed for traders who want a clear record of what trades were 
 - Clean, table-first interface
 - Support for multiple accounts or portfolios
 - Bulk CSV import (with duplicate detection) and CSV export
-- Email/password auth with email verification and password reset
+- Email/password auth (no email verification or password-reset flow — self-hosted, no email server assumed)
 - Personal access tokens for scripting against a real REST API
 - Runs locally with Docker — no external services required
 
@@ -227,8 +227,8 @@ mytradeledger/
 
 ## API Overview
 
-Every endpoint except `/api/health`, auth registration/login, and password-reset/verification requires
-a Bearer token — either your session JWT or a personal access token from Settings → API Tokens.
+Every endpoint except `/api/health` and auth registration/login requires a Bearer token — either your
+session JWT or a personal access token from Settings → API Tokens.
 
 | Endpoint | Description |
 |----------|-------------|
@@ -318,7 +318,7 @@ MyTradeLedger is under active development. Features and structure may evolve, bu
 - [x] Account management
 - [x] Gross/net P&L calculations (average cost method)
 - [x] CSV import and export
-- [x] Email/password auth, email verification, password reset
+- [x] Email/password auth
 - [x] Personal access tokens
 - [x] Light/dark theme
 - [ ] Ongoing usability refinements

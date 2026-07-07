@@ -5,7 +5,6 @@ import { authApi } from '../services/api';
 interface AuthUser {
   id: string;
   email: string;
-  emailVerified: boolean;
 }
 
 interface SessionWarning {

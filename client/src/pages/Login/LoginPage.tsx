@@ -7,9 +7,8 @@ export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { from?: string; passwordReset?: boolean } | null;
+  const locationState = location.state as { from?: string } | null;
   const from = locationState?.from || '/app';
-  const passwordReset = Boolean(locationState?.passwordReset);
   const { theme, toggleTheme } = useTheme();
 
   const [email, setEmail] = useState('');
@@ -67,12 +66,6 @@ export function LoginPage() {
           <div className="card-body">
             <h1 className="text-2xl font-bold mb-6">Log in to MyTradeLedger</h1>
 
-            {passwordReset && (
-              <div className="alert alert-success mb-4">
-                <span>Your password has been reset. Please log in.</span>
-              </div>
-            )}
-
             {error && (
               <div className="alert alert-error mb-4">
                 <span>{error}</span>
@@ -111,12 +104,6 @@ export function LoginPage() {
                   required
                   autoComplete="current-password"
                 />
-                <label className="label">
-                  <span className="label-text-alt" />
-                  <Link to="/forgot-password" className="label-text-alt link link-hover">
-                    Forgot password?
-                  </Link>
-                </label>
               </div>
 
               <button

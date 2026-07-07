@@ -53,7 +53,7 @@ describe('DocsLayout header', () => {
   });
 
   it('shows full app nav with user email and no Log In when logged in', () => {
-    renderDocsLayout({ id: '1', email: 'user@example.com', emailVerified: true });
+    renderDocsLayout({ id: '1', email: 'user@example.com' });
     expect(screen.getByText('user@example.com')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /log in/i })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();

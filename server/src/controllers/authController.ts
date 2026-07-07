@@ -43,7 +43,6 @@ export const authController = {
           user: {
             id: user.id,
             email: user.email,
-            emailVerified: Boolean(user.emailVerifiedAt),
           },
         },
       });
@@ -72,7 +71,6 @@ export const authController = {
           user: {
             id: user.id,
             email: user.email,
-            emailVerified: Boolean(user.emailVerifiedAt),
           },
         },
       });
@@ -85,94 +83,16 @@ export const authController = {
     }
   },
 
-  async forgotPassword(req: Request, res: Response) {
-    try {
-      const { email } = req.body;
-
-      if (email && typeof email === 'string') {
-        await authService.requestPasswordReset(email);
-      }
-
-      // Always return a generic success response to avoid account enumeration.
-      res.json({ ok: true });
-    } catch (error) {
-      console.error('Forgot password error:', error);
-      // Still return a generic response so the outcome can't be inferred.
-      res.json({ ok: true });
-    }
-  },
-
-  async resetPassword(req: Request, res: Response) {
-    try {
-      const { token, newPassword } = req.body;
-
-      if (!token || typeof token !== 'string') {
-        return res.status(400).json({ error: 'Reset token is required' });
-      }
-      if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
-        return res.status(400).json({ error: 'Password must be at least 8 characters' });
-      }
-
-      await authService.resetPassword(token, newPassword);
-
-      res.json({ ok: true });
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message === 'INVALID_RESET_TOKEN') {
-        return res.status(400).json({ error: 'This reset link is invalid or has expired' });
-      }
-      console.error('Reset password error:', error);
-      res.status(500).json({ error: 'Failed to reset password' });
-    }
-  },
-
   async me(req: Request, res: Response) {
     try {
       const user = await authService.getById(req.user!.userId);
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
-      const { emailVerifiedAt, ...rest } = user;
-      res.json({ data: { ...rest, emailVerified: Boolean(emailVerifiedAt) } });
+      res.json({ data: user });
     } catch (error) {
       console.error('Me error:', error);
       res.status(500).json({ error: 'Failed to fetch user' });
-    }
-  },
-
-  async verifyEmail(req: Request, res: Response) {
-    try {
-      const { token } = req.body;
-
-      if (!token || typeof token !== 'string') {
-        return res.status(400).json({ error: 'Verification token is required' });
-      }
-
-      await authService.verifyEmail(token);
-
-      res.json({ ok: true });
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message === 'INVALID_VERIFICATION_TOKEN') {
-        return res.status(400).json({ error: 'This verification link is invalid or has expired' });
-      }
-      console.error('Verify email error:', error);
-      res.status(500).json({ error: 'Failed to verify email' });
-    }
-  },
-
-  async resendVerification(req: Request, res: Response) {
-    try {
-      const { email } = req.body;
-
-      if (email && typeof email === 'string') {
-        await authService.resendVerification(email);
-      }
-
-      // Always return a generic success response to avoid account enumeration.
-      res.json({ ok: true });
-    } catch (error) {
-      console.error('Resend verification error:', error);
-      // Still return a generic response so the outcome can't be inferred.
-      res.json({ ok: true });
     }
   },
 
@@ -189,16 +109,6 @@ export const authController = {
       }
       console.error('Refresh error:', error);
       res.status(500).json({ error: 'Failed to refresh session' });
-    }
-  },
-
-  async purgeTokens(req: Request, res: Response) {
-    try {
-      const result = await authService.purgeTokens();
-      res.json({ data: result });
-    } catch (error) {
-      console.error('Purge tokens error:', error);
-      res.status(500).json({ error: 'Failed to purge tokens' });
     }
   },
 };

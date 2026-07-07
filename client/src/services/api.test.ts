@@ -129,15 +129,6 @@ describe('ledgerApi.list — query string building', () => {
 });
 
 describe('endpoint wiring', () => {
-  it('authApi.forgotPassword posts the email to /auth/forgot-password', async () => {
-    const fetchMock = mockFetch({ jsonData: { ok: true } });
-    await authApi.forgotPassword('user@example.com');
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('/api/auth/forgot-password');
-    expect((init as RequestInit).method).toBe('POST');
-    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ email: 'user@example.com' });
-  });
-
   it('tokensApi.revoke issues a DELETE to the token id', async () => {
     const fetchMock = mockFetch({ status: 204, jsonData: undefined });
     await tokensApi.revoke('tok_42');

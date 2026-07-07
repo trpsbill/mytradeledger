@@ -1,9 +1,6 @@
 export { HomePage } from './Home';
 export { SignupPage } from './Signup';
 export { LoginPage } from './Login';
-export { ForgotPasswordPage } from './ForgotPassword';
-export { ResetPasswordPage } from './ResetPassword';
-export { VerifyEmailPage } from './VerifyEmail';
 export { DashboardPage } from './Dashboard';
 export { AccountsPage } from './Accounts';
 export { LedgerPage } from './Ledger';

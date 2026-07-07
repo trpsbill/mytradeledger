@@ -77,27 +77,3 @@ export const registerLimiter = buildLimiter('register', {
   max: 10,
   message: { error: 'Too many accounts created from this IP, please try again later' },
 });
-
-export const forgotPasswordLimiter = buildLimiter('forgot-password', {
-  windowMs: FIFTEEN_MIN,
-  max: 5,
-  message: { error: 'Too many password reset requests, please try again later' },
-});
-
-export const resetPasswordLimiter = buildLimiter('reset-password', {
-  windowMs: FIFTEEN_MIN,
-  max: 10,
-  message: { error: 'Too many password reset attempts, please try again later' },
-});
-
-export const verifyEmailLimiter = buildLimiter('verify-email', {
-  windowMs: FIFTEEN_MIN,
-  max: 20,
-  message: { error: 'Too many verification attempts, please try again later' },
-});
-
-export const resendVerificationLimiter = buildLimiter('resend-verification', {
-  windowMs: FIFTEEN_MIN,
-  max: 5,
-  message: { error: 'Too many verification email requests, please try again later' },
-});

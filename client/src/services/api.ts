@@ -11,8 +11,6 @@ import type {
   CreateTokenResponse,
 } from '../types';
 
-import { withPowRetry } from './pow';
-
 const API_BASE = '/api';
 const TOKEN_KEY = 'mtl_token';
 
@@ -64,46 +62,6 @@ export const authApi = {
     return json.data as { token: string };
   },
 
-  // Solves the failure-triggered PoW challenge transparently when the server
-  // demands one (403), then retries. `onSolving` lets the form show a verifying
-  // state while the browser works.
-  forgotPassword: async (email: string, onSolving?: () => void) => {
-    const response = await withPowRetry(
-      (challengeToken) =>
-        fetch(`${API_BASE}/auth/forgot-password`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(challengeToken ? { 'x-challenge-token': challengeToken } : {}),
-          },
-          body: JSON.stringify({ email }),
-        }),
-      onSolving
-    );
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || 'Request failed');
-    }
-    return response.json() as Promise<{ ok: true }>;
-  },
-
-  resetPassword: (token: string, newPassword: string) =>
-    request<{ ok: true }>('/auth/reset-password', {
-      method: 'POST',
-      body: JSON.stringify({ token, newPassword }),
-    }),
-
-  verifyEmail: (token: string) =>
-    request<{ ok: true }>('/auth/verify-email', {
-      method: 'POST',
-      body: JSON.stringify({ token }),
-    }),
-
-  resendVerification: (email: string) =>
-    request<{ ok: true }>('/auth/resend-verification', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    }),
 };
 
 // Accounts API

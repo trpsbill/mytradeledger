@@ -59,7 +59,7 @@ describe('AppNavbar', () => {
 
   it('shows user email, nav links, and no Log In when logged in', () => {
     vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: '1', email: 'test@example.com', emailVerified: true } })
+      baseAuth({ user: { id: '1', email: 'test@example.com' } })
     );
     renderNavbar();
     expect(screen.getByText('test@example.com')).toBeInTheDocument();
@@ -72,7 +72,7 @@ describe('AppNavbar', () => {
 
   it('shows the API Tokens and Support menu items when logged in', () => {
     vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: '1', email: 'test@example.com', emailVerified: true } })
+      baseAuth({ user: { id: '1', email: 'test@example.com' } })
     );
     renderNavbar();
     expect(screen.getByRole('link', { name: 'API Tokens' })).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe('AppNavbar', () => {
   describe('active nav highlighting', () => {
     beforeEach(() => {
       vi.mocked(useAuth).mockReturnValue(
-        baseAuth({ user: { id: '1', email: 'test@example.com', emailVerified: true } })
+        baseAuth({ user: { id: '1', email: 'test@example.com' } })
       );
     });
 
@@ -129,7 +129,7 @@ describe('AppNavbar', () => {
 
   it('opens the support modal when Support is clicked', () => {
     vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: '1', email: 'test@example.com', emailVerified: true } })
+      baseAuth({ user: { id: '1', email: 'test@example.com' } })
     );
     renderNavbar();
     fireEvent.click(screen.getByRole('button', { name: /support/i }));
@@ -139,7 +139,7 @@ describe('AppNavbar', () => {
   it('calls logout() and navigates to / when Log out is clicked', () => {
     const logout = vi.fn();
     vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: '1', email: 'test@example.com', emailVerified: true }, logout })
+      baseAuth({ user: { id: '1', email: 'test@example.com' }, logout })
     );
     renderNavbar();
     fireEvent.click(screen.getByRole('button', { name: /log out/i }));

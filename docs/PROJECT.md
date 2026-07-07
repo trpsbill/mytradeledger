@@ -24,7 +24,8 @@ This is the **open-source, self-hosted** distribution: run it yourself with Dock
 - Calculates realized gross and net P&L automatically (average-cost method)
 - Bulk-imports trades from CSV (with duplicate detection)
 - Exports the full ledger to CSV
-- Supports email/password auth with email verification and password reset
+- Supports email/password auth (no email verification or password-reset flow —
+  it's a self-hosted, typically single-user instance)
 - Issues personal access tokens for scripting against the API
 - Seeds an optional sample "Demo Portfolio" account for exploring the app
 

@@ -24,9 +24,11 @@ Two ways to authenticate, both via `Authorization: Bearer <token>`:
   automation. Doesn't expire unless you set an expiry.
 
 Public (no token) endpoints: `GET /api/health`, `GET /api/auth/config`, `POST /api/auth/register`,
-`POST /api/auth/login`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`,
-`POST /api/auth/verify-email`, `POST /api/auth/resend-verification`, `GET /api/auth/challenge`.
-Everything else requires a valid Bearer token.
+`POST /api/auth/login`, `GET /api/auth/challenge`. Everything else requires a valid Bearer token.
+
+There's no email verification or password-reset flow — this is a self-hosted, typically single-user
+instance with no email server assumed. If you forget your password, reset it directly in the
+database (e.g. via Prisma Studio: `make db-studio`).
 
 Full request/response examples: `/docs/api/authentication` in the running app, or
 `client/src/pages/Docs/pages/api/AuthApiPage.tsx` in source.

@@ -12,17 +12,17 @@ The database records what actually happened, in the order it happened, and lets 
 
 ### User
 
-An account holder. Email/password auth with email verification.
+An account holder. Email/password auth — no email verification or password-reset flow, since this
+is a self-hosted, typically single-user instance with no email server assumed.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | UUID | Unique identifier |
 | `email` | String | Unique, case-normalized to lowercase |
 | `passwordHash` | String | bcrypt hash |
-| `emailVerifiedAt` | DateTime? | Null until the user verifies their email |
 | `createdAt` | DateTime | Creation timestamp |
 
-Related: `accounts`, `personalAccessTokens`, `passwordResetTokens`, `emailVerificationTokens`.
+Related: `accounts`, `personalAccessTokens`.
 
 ### PersonalAccessToken
 
@@ -92,10 +92,6 @@ Flexible key-value extension for ledger entries (e.g. exchange name, import batc
 ### Asset (legacy)
 
 Kept for backward compatibility; trading pairs are stored directly as a `symbol` string on `LedgerEntry`, so this table is largely unused in the current model.
-
-### PasswordResetToken / EmailVerificationToken
-
-Single-use, hashed (SHA-256) tokens with an expiry, used by the password-reset and email-verification flows. Never store the raw token — only its hash.
 
 ---
 

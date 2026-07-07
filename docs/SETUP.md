@@ -210,10 +210,12 @@ The application will be available at http://localhost:80.
 | `SESSION_IDLE_TIMEOUT_MS` / `SESSION_MAX_LIFETIME_MS` | Session expiry controls | `300000` / `28800000` |
 | `SIGNUP_ENABLED` | Set `false` to close registration (login still works) | `true` |
 | `CHALLENGE_ENABLED` | Self-hosted proof-of-work anti-automation challenge on repeated auth failures | `true` |
-| `MJ_APIKEY_PUBLIC` / `MJ_APIKEY_PRIVATE` / `MJ_FROM_EMAIL` | Mailjet, for password-reset/verification email | (unset — sandbox-logs instead) |
+| `MJ_APIKEY_PUBLIC` / `MJ_APIKEY_PRIVATE` / `MJ_FROM_EMAIL` | Mailjet, used for the support request form only | (unset — sandbox-logs instead) |
 | `MJ_SANDBOX` | `true` logs emails to console instead of sending | `true` |
-| `ADMIN_API_KEY` | Guards maintenance endpoints (token purge) | (unset — endpoint disabled) |
 | `REDIS_URL` | Optional shared rate-limit store for multi-instance deployments | (unset — in-memory) |
+
+There's no email verification or password-reset flow — this is a self-hosted, typically single-user
+instance with no email server assumed. Forgot your password? Reset it directly via `make db-studio`.
 
 See `server/.env.example` for the full list with detailed comments.
 
