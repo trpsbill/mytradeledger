@@ -3,7 +3,6 @@ import prisma from '../db';
 import { parseCsv } from './parser';
 import { PRESETS, generic } from './presets';
 import { checkDupes } from './dedupeCheck';
-import { FREE_LIMIT, FREE_IMPORT_CAP } from '../services/billingService';
 import type { ImportPreset, NormalizedTrade, ParseWarning } from './types';
 
 const VALID_PRESET_IDS = Object.keys(PRESETS);
@@ -20,8 +19,6 @@ interface PreviewResponse {
     skippedCount: number;
     missingFeeCount: number;
     hasMissingFees: boolean;
-    freeImportCap: number | null;
-    cappedCount: number;
   };
 }
 
@@ -82,32 +79,12 @@ export async function previewHandler(req: Request, res: Response): Promise<void>
     const userId = req.user!.userId;
     const { duplicateIndices } = await checkDupes(trades, userId, prisma);
 
-    const willImportAll: NormalizedTrade[] = [];
+    const willImport: NormalizedTrade[] = [];
     const duplicates: NormalizedTrade[] = [];
     for (const trade of trades) {
       if (duplicateIndices.has(trade.rawRowIndex)) duplicates.push(trade);
-      else willImportAll.push(trade);
+      else willImport.push(trade);
     }
-
-    // ── Free-tier import cap ──────────────────────────────────────────────────
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        isPaid: true,
-        hasHitFreeLimit: true,
-        accounts: { where: { isDemo: false }, select: { _count: { select: { ledgerEntries: true } } } },
-      },
-    });
-    const isPaid = user?.isPaid ?? false;
-    let freeImportCap: number | null = null;
-    let willImport = willImportAll;
-    if (!isPaid) {
-      const currentCount = (user?.accounts ?? []).reduce((s, a) => s + a._count.ledgerEntries, 0);
-      const slotsLeft = user?.hasHitFreeLimit ? 0 : Math.max(0, FREE_LIMIT - currentCount);
-      freeImportCap = Math.min(FREE_IMPORT_CAP, slotsLeft);
-      willImport = willImportAll.slice(0, freeImportCap);
-    }
-    const cappedCount = willImportAll.length - willImport.length;
 
     const missingFeeCount = warnings.filter(w => w.code === 'MISSING_FEE').length;
 
@@ -122,8 +99,6 @@ export async function previewHandler(req: Request, res: Response): Promise<void>
         skippedCount: skipped.length,
         missingFeeCount,
         hasMissingFees: missingFeeCount > 0,
-        freeImportCap,
-        cappedCount,
       },
     };
 

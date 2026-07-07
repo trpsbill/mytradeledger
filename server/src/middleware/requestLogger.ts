@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { Request, Response, NextFunction } from 'express';
-import { getLogtail } from '../config/logger';
+import { getLogger } from '../config/logger';
 
 const REDACT_PATTERNS = ['password', 'token', 'secret', 'authorization', 'apikey'];
 
@@ -39,18 +39,9 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
   res.locals.requestId = requestId;
 
   res.on('finish', () => {
-    const logger = getLogtail();
-    if (!logger) return;
+    const logger = getLogger();
 
     const statusCode = res.statusCode;
-
-    // A successful client-logs POST already produces its own descriptive
-    // Better Stack entry (see clientLogsRoutes.ts) — logging the wrapping
-    // request too would double every click/error event into two near-
-    // duplicate lines. Failures (4xx/5xx) still get logged here since the
-    // route itself doesn't log those.
-    if (originalPath === '/api/client-logs' && statusCode < 400) return;
-
     const durationMs = Date.now() - startMs;
     const route = req.baseUrl + (req.route?.path ?? req.path);
     const message = `${req.method} ${originalPath} ${statusCode}`;

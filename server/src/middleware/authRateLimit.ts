@@ -101,13 +101,3 @@ export const resendVerificationLimiter = buildLimiter('resend-verification', {
   max: 5,
   message: { error: 'Too many verification email requests, please try again later' },
 });
-
-// Demo-login creates a real User row (plus seeded account/ledger data) from an
-// anonymous, unauthenticated request — no password to guess, so the abuse
-// vector is farming many demo accounts rather than credential stuffing. A flat
-// per-IP cap, stricter than registerLimiter, fully addresses that.
-export const demoLoginLimiter = buildLimiter('demo-login', {
-  windowMs: ONE_HOUR,
-  max: 5,
-  message: { error: 'Too many demo sessions started from this network, please try again later' },
-});

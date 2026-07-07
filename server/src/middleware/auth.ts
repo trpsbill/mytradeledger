@@ -7,8 +7,6 @@ const SESSION_MAX_LIFETIME_MS = parseInt(process.env.SESSION_MAX_LIFETIME_MS ?? 
 export interface AuthUser {
   userId: string;
   email: string;
-  isPaid: boolean;
-  isDemo?: boolean;
   loginAt?: number; // seconds since epoch — present on session JWTs
 }
 

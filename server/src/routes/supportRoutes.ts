@@ -2,7 +2,6 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { authRateLimit } from '../middleware/rateLimit';
 import { sendSupportEmail } from '../services/email';
-import { blockDemo } from '../middleware/blockDemo';
 
 const router = Router();
 
@@ -12,7 +11,7 @@ const supportLimiter = authRateLimit('support', {
   message: { error: 'Too many support requests. Please try again later.' },
 });
 
-router.post('/', blockDemo, supportLimiter, async (req: Request, res: Response) => {
+router.post('/', supportLimiter, async (req: Request, res: Response) => {
   const { subject, message } = req.body as { subject?: unknown; message?: unknown };
 
   if (!subject || typeof subject !== 'string' || subject.trim().length === 0) {

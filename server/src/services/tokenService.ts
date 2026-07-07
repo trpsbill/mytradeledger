@@ -67,6 +67,6 @@ export const tokenService = {
       .update({ where: { id: pat.id }, data: { lastUsedAt: new Date() } })
       .catch(() => {});
 
-    return { userId: pat.user.id, email: pat.user.email, isPaid: pat.user.isPaid };
+    return { userId: pat.user.id, email: pat.user.email };
   },
 };

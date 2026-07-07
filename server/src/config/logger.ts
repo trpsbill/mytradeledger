@@ -1,23 +1,19 @@
-import { Logtail } from '@logtail/node';
+type LogFields = Record<string, unknown>;
 
-let logtail: Logtail | null = null;
-let initialized = false;
-
-export function getLogtail(): Logtail | null {
-  if (initialized) return logtail;
-  initialized = true;
-  const token = process.env.LOGTAIL_SOURCE_TOKEN;
-  if (!token) return null;
-  const host = process.env.LOGTAIL_INGESTING_HOST;
-  const endpoint = host
-    ? host.startsWith('http') ? host : `https://${host}`
-    : undefined;
-  logtail = new Logtail(token, endpoint ? { endpoint } : undefined);
-  return logtail;
+interface StructuredLogger {
+  info(message: string, fields?: LogFields): Promise<void>;
+  error(message: string, fields?: LogFields): Promise<void>;
 }
 
-/** Test-only: reset the cached instance so env changes take effect between tests. */
-export function __resetLogtailForTests(): void {
-  logtail = null;
-  initialized = false;
+function write(level: 'info' | 'error', message: string, fields?: LogFields): Promise<void> {
+  // eslint-disable-next-line no-console
+  console[level](JSON.stringify({ level, message, ...fields, timestamp: new Date().toISOString() }));
+  return Promise.resolve();
+}
+
+export function getLogger(): StructuredLogger {
+  return {
+    info: (message, fields) => write('info', message, fields),
+    error: (message, fields) => write('error', message, fields),
+  };
 }

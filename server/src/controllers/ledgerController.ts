@@ -2,9 +2,6 @@ import { Request, Response } from 'express';
 import { EntryType, Prisma } from '@prisma/client';
 import { ledgerService } from '../services/ledgerService';
 import { CreateLedgerEntryRequest, UpdateLedgerEntryRequest, LedgerQueryParams } from '../types';
-import prisma from '../db';
-import { FREE_LIMIT } from '../services/billingService';
-
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_DELETE_BATCH_SIZE = 500;
@@ -90,19 +87,6 @@ export const ledgerController = {
 
       const entry = await ledgerService.create(userId, data);
 
-      // Fire-and-forget: mark hasHitFreeLimit once the total crosses the threshold
-      prisma.ledgerEntry
-        .count({ where: { account: { userId, isDemo: false } } })
-        .then(async (total) => {
-          if (total >= FREE_LIMIT) {
-            await prisma.user.update({
-              where: { id: userId },
-              data: { hasHitFreeLimit: true },
-            });
-          }
-        })
-        .catch(() => {});
-
       res.status(201).json({ data: entry });
     } catch (error) {
       if (error instanceof Error && error.message === 'accountId is required when multiple accounts exist') {
@@ -122,37 +106,7 @@ export const ledgerController = {
         return res.status(400).json({ error: 'entries array is required' });
       }
 
-      // Cap batch size for free users to remaining slots (mirrors import/commit.ts)
-      const freeUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          isPaid: true,
-          accounts: { where: { isDemo: false }, select: { _count: { select: { ledgerEntries: true } } } },
-        },
-      });
-      let cappedEntries = entries;
-      if (!freeUser?.isPaid) {
-        const currentCount = (freeUser?.accounts ?? []).reduce((s, a) => s + a._count.ledgerEntries, 0);
-        const slotsLeft = Math.max(0, FREE_LIMIT - currentCount);
-        cappedEntries = entries.slice(0, slotsLeft);
-        if (cappedEntries.length === 0) {
-          return res.status(402).json({ error: 'FREE_LIMIT_REACHED', current: currentCount, limit: FREE_LIMIT });
-        }
-      }
-
-      const result = await ledgerService.createMany(userId, cappedEntries);
-
-      // Set hasHitFreeLimit if the new total crosses the threshold
-      if (!freeUser?.isPaid) {
-        prisma.ledgerEntry
-          .count({ where: { account: { userId, isDemo: false } } })
-          .then(async (total) => {
-            if (total >= FREE_LIMIT) {
-              await prisma.user.update({ where: { id: userId }, data: { hasHitFreeLimit: true } });
-            }
-          })
-          .catch(() => {});
-      }
+      const result = await ledgerService.createMany(userId, entries);
 
       res.status(201).json({ data: { count: result.count } });
     } catch (error) {

@@ -73,7 +73,7 @@ async function get(url: string, token?: string) {
 describe('requireAuth — valid token', () => {
   it('accepts a JWT with a current loginAt and attaches req.user', async () => {
     const base = await startApp();
-    const token = sign({ userId: 'u1', email: 'a@b.com', isPaid: false, loginAt: loginAtNow() });
+    const token = sign({ userId: 'u1', email: 'a@b.com', loginAt: loginAtNow() });
     const { status, json } = await get(`${base}/protected`, token);
     expect(status).toBe(200);
     expect(json.userId).toBe('u1');
@@ -81,14 +81,14 @@ describe('requireAuth — valid token', () => {
 
   it('accepts a JWT within the session lifetime (1 hour old)', async () => {
     const base = await startApp();
-    const token = sign({ userId: 'u1', email: 'a@b.com', isPaid: false, loginAt: loginAtHoursAgo(1) });
+    const token = sign({ userId: 'u1', email: 'a@b.com', loginAt: loginAtHoursAgo(1) });
     const { status } = await get(`${base}/protected`, token);
     expect(status).toBe(200);
   });
 
   it('accepts a JWT without loginAt — backward compatibility with pre-existing tokens', async () => {
     const base = await startApp();
-    const token = sign({ userId: 'u1', email: 'a@b.com', isPaid: false });
+    const token = sign({ userId: 'u1', email: 'a@b.com' });
     const { status, json } = await get(`${base}/protected`, token);
     expect(status).toBe(200);
     expect(json.userId).toBe('u1');
@@ -110,7 +110,7 @@ describe('requireAuth — rejected tokens', () => {
 
   it('returns 401 for a JWT signed with the wrong secret', async () => {
     const base = await startApp();
-    const token = jwt.sign({ userId: 'u1', email: 'a@b.com', isPaid: false }, 'wrong-secret', {
+    const token = jwt.sign({ userId: 'u1', email: 'a@b.com' }, 'wrong-secret', {
       expiresIn: '1h',
     });
     const { status } = await get(`${base}/protected`, token);
@@ -119,7 +119,7 @@ describe('requireAuth — rejected tokens', () => {
 
   it('returns 401 for an expired JWT', async () => {
     const base = await startApp();
-    const token = sign({ userId: 'u1', email: 'a@b.com', isPaid: false, loginAt: loginAtNow() }, '-1s');
+    const token = sign({ userId: 'u1', email: 'a@b.com', loginAt: loginAtNow() }, '-1s');
     const { status } = await get(`${base}/protected`, token);
     expect(status).toBe(401);
   });
@@ -130,7 +130,6 @@ describe('requireAuth — rejected tokens', () => {
     const token = sign({
       userId: 'u1',
       email: 'a@b.com',
-      isPaid: false,
       loginAt: loginAtHoursAgo(9),
     });
     const { status } = await get(`${base}/protected`, token);
@@ -143,7 +142,7 @@ describe('requireAuth — rejected tokens', () => {
 describe('requireSessionAuth', () => {
   it('accepts a valid session JWT', async () => {
     const base = await startApp();
-    const token = sign({ userId: 'u1', email: 'a@b.com', isPaid: false, loginAt: loginAtNow() });
+    const token = sign({ userId: 'u1', email: 'a@b.com', loginAt: loginAtNow() });
     const { status } = await get(`${base}/session-only`, token);
     expect(status).toBe(200);
   });
@@ -160,7 +159,6 @@ describe('requireSessionAuth', () => {
     const token = sign({
       userId: 'u1',
       email: 'a@b.com',
-      isPaid: false,
       loginAt: loginAtHoursAgo(9),
     });
     const { status } = await get(`${base}/session-only`, token);

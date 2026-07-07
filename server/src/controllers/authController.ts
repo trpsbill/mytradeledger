@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import { authService, signToken } from '../services/authService';
-import { demoService } from '../services/demoService';
+import { authService } from '../services/authService';
 import { issuePowChallenge } from '../middleware/powChallenge';
-import { getLogtail } from '../config/logger';
 
 export const authController = {
   // Issues a fresh proof-of-work challenge for the client to solve. Public: the
@@ -23,7 +21,7 @@ export const authController = {
         return res.status(403).json({ error: 'Signups are currently closed.' });
       }
 
-      const { email, password, marketingOptIn } = req.body;
+      const { email, password } = req.body;
 
       if (!email || typeof email !== 'string') {
         return res.status(400).json({ error: 'Email is required' });
@@ -37,18 +35,7 @@ export const authController = {
         return res.status(400).json({ error: 'Invalid email address' });
       }
 
-      const { user, token } = await authService.register(
-        email,
-        password,
-        Boolean(marketingOptIn)
-      );
-
-      getLogtail()?.info('user signup', {
-        source: 'server',
-        event: 'signup',
-        userId: user.id,
-        email: user.email,
-      }).catch(() => {});
+      const { user, token } = await authService.register(email, password);
 
       res.status(201).json({
         data: {
@@ -56,9 +43,7 @@ export const authController = {
           user: {
             id: user.id,
             email: user.email,
-            isPaid: user.isPaid,
             emailVerified: Boolean(user.emailVerifiedAt),
-            isDemo: user.isDemo,
           },
         },
       });
@@ -87,9 +72,7 @@ export const authController = {
           user: {
             id: user.id,
             email: user.email,
-            isPaid: user.isPaid,
             emailVerified: Boolean(user.emailVerifiedAt),
-            isDemo: user.isDemo,
           },
         },
       });
@@ -206,57 +189,6 @@ export const authController = {
       }
       console.error('Refresh error:', error);
       res.status(500).json({ error: 'Failed to refresh session' });
-    }
-  },
-
-  async demoLogin(req: Request, res: Response) {
-    try {
-      const user = await demoService.createDemoUser();
-      const token = signToken(user);
-
-      getLogtail()?.info('demo session started', {
-        source: 'server',
-        event: 'demo_start',
-        userId: user.id,
-      }).catch(() => {});
-
-      res.status(201).json({
-        data: {
-          token,
-          user: {
-            id: user.id,
-            email: user.email,
-            isPaid: user.isPaid,
-            emailVerified: true,
-            isDemo: true,
-          },
-        },
-      });
-    } catch (error) {
-      console.error('Demo login error:', error);
-      res.status(500).json({ error: 'Failed to start demo session' });
-    }
-  },
-
-  // Called on logout so a demo user's data is cleaned up immediately rather
-  // than waiting for the scheduled sweep. No-ops harmlessly for a real user.
-  async deleteDemoSession(req: Request, res: Response) {
-    try {
-      await demoService.deleteDemoUser(req.user!.userId);
-      res.status(204).end();
-    } catch (error) {
-      console.error('Delete demo session error:', error);
-      res.status(500).json({ error: 'Failed to end demo session' });
-    }
-  },
-
-  async purgeDemoUsers(req: Request, res: Response) {
-    try {
-      const result = await demoService.cleanupExpiredDemoUsers();
-      res.json({ data: result });
-    } catch (error) {
-      console.error('Purge demo users error:', error);
-      res.status(500).json({ error: 'Failed to purge demo users' });
     }
   },
 

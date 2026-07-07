@@ -2,14 +2,12 @@ import type { AddressInfo } from 'net';
 import type { Server } from 'http';
 import type { ErrorRequestHandler } from 'express';
 import express from 'express';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { __resetLogtailForTests } from '../config/logger';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-// Mock @logtail/node so no real HTTP calls are made
 const mockInfo = vi.fn().mockResolvedValue(undefined);
 const mockError = vi.fn().mockResolvedValue(undefined);
-vi.mock('@logtail/node', () => ({
-  Logtail: vi.fn().mockImplementation(() => ({ info: mockInfo, error: mockError })),
+vi.mock('../config/logger', () => ({
+  getLogger: () => ({ info: mockInfo, error: mockError }),
 }));
 
 // Import after mock so the mock is in place when the module resolves
@@ -22,9 +20,6 @@ afterEach(async () => {
     servers.splice(0).map((s) => new Promise<void>((resolve) => s.close(() => resolve())))
   );
   vi.clearAllMocks();
-  delete process.env.LOGTAIL_SOURCE_TOKEN;
-  delete process.env.LOGTAIL_INGESTING_HOST;
-  __resetLogtailForTests();
 });
 
 type AppOpts = {
@@ -33,7 +28,6 @@ type AppOpts = {
   withParamId?: boolean;
   withErrorHandler?: boolean;
   withSubRouter?: boolean;
-  clientLogsStatusCode?: number;
 };
 
 function startApp(opts: AppOpts = {}): Promise<string> {
@@ -44,7 +38,7 @@ function startApp(opts: AppOpts = {}): Promise<string> {
 
   app.get('/api/test', (req, res) => {
     if (opts.withUser) {
-      req.user = { userId: 'user-123', email: 'a@b.com', isPaid: false };
+      req.user = { userId: 'user-123', email: 'a@b.com' };
     }
     res.status(opts.statusCode ?? 200).json({ ok: true });
   });
@@ -60,12 +54,6 @@ function startApp(opts: AppOpts = {}): Promise<string> {
   app.patch('/api/test', (_req, res) => {
     res.status(200).json({ ok: true });
   });
-
-  if (opts.clientLogsStatusCode !== undefined) {
-    app.post('/api/client-logs', (_req, res) => {
-      res.status(opts.clientLogsStatusCode!).end();
-    });
-  }
 
   if (opts.withParamId) {
     app.get('/api/items/:id', (_req, res) => {
@@ -126,20 +114,7 @@ async function patch(url: string, body: Record<string, unknown>): Promise<number
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-describe('requestLogger — logging disabled', () => {
-  it('does not log when LOGTAIL_SOURCE_TOKEN is not set', async () => {
-    const base = await startApp();
-    await get(`${base}/api/test`);
-    expect(mockInfo).not.toHaveBeenCalled();
-    expect(mockError).not.toHaveBeenCalled();
-  });
-});
-
-describe('requestLogger — logging enabled', () => {
-  beforeEach(() => {
-    process.env.LOGTAIL_SOURCE_TOKEN = 'test-token';
-  });
-
+describe('requestLogger', () => {
   it('calls logger.info for a 200 response with the correct fields', async () => {
     const base = await startApp({ withUser: true });
     await get(`${base}/api/test`);
@@ -322,27 +297,5 @@ describe('requestLogger — logging enabled', () => {
     await get(`${base}/api/boom`);
     const [, fields] = mockError.mock.calls[0];
     expect(fields.error).toEqual({ message: 'Internal server error' });
-  });
-
-  // /api/client-logs exclusion — its own route already logs the event content
-  it('does not log a successful POST to /api/client-logs', async () => {
-    const base = await startApp({ clientLogsStatusCode: 204 });
-    await post(`${base}/api/client-logs`, { message: 'click - New Entry' });
-    expect(mockInfo).not.toHaveBeenCalled();
-    expect(mockError).not.toHaveBeenCalled();
-  });
-
-  it('still logs a failed (400) POST to /api/client-logs', async () => {
-    const base = await startApp({ clientLogsStatusCode: 400 });
-    await post(`${base}/api/client-logs`, {});
-    expect(mockInfo).toHaveBeenCalledOnce();
-    const [message] = mockInfo.mock.calls[0];
-    expect(message).toBe('POST /api/client-logs 400');
-  });
-
-  it('still logs a failed (500) POST to /api/client-logs', async () => {
-    const base = await startApp({ clientLogsStatusCode: 500 });
-    await post(`${base}/api/client-logs`, { message: 'click' });
-    expect(mockError).toHaveBeenCalledOnce();
   });
 });

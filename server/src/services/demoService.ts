@@ -1,11 +1,7 @@
-import bcrypt from 'bcrypt';
-import crypto from 'crypto';
 import { Prisma } from '@prisma/client';
 import prisma from '../db';
 import { calculateValueBase, toSignedQuantity } from './pnlCalculations';
 import { ledgerService } from './ledgerService';
-
-const DEMO_ACCOUNT_TTL_MS = parseInt(process.env.DEMO_ACCOUNT_TTL_MS ?? '') || 24 * 60 * 60 * 1000;
 
 type DemoEntry = {
   symbol: string;
@@ -66,47 +62,5 @@ export const demoService = {
     }
 
     return account;
-  },
-
-  // Creates a brand-new, isolated demo user for an anonymous visitor: no shared
-  // credentials, own seeded portfolio, auto-expiring so cleanupExpiredDemoUsers
-  // can reclaim it later.
-  async createDemoUser() {
-    const suffix = crypto.randomBytes(8).toString('hex');
-    const user = await prisma.user.create({
-      data: {
-        email: `demo-${suffix}@demo.mytradeledger.local`,
-        // Unusable, unguessable — demo users are only ever authenticated via the
-        // JWT minted at creation time, never via the password login form.
-        passwordHash: await bcrypt.hash(crypto.randomBytes(24).toString('hex'), 12),
-        isDemo: true,
-        demoExpiresAt: new Date(Date.now() + DEMO_ACCOUNT_TTL_MS),
-        emailVerifiedAt: new Date(),
-      },
-    });
-
-    await this.seedDemoAccount(user.id);
-
-    return user;
-  },
-
-  // Deletes demo users whose TTL has passed. Cascades (User -> Account ->
-  // LedgerEntry -> LedgerMetadata, plus PersonalAccessToken/PasswordResetToken/
-  // EmailVerificationToken) clean up all related rows in one call.
-  async cleanupExpiredDemoUsers() {
-    const { count } = await prisma.user.deleteMany({
-      where: { isDemo: true, demoExpiresAt: { lt: new Date() } },
-    });
-    return { deletedDemoUsers: count };
-  },
-
-  // Immediately deletes a single demo user (called on logout, so we don't have
-  // to wait for the TTL/scheduled sweep). The isDemo filter makes this a no-op
-  // for a real user's id — safe to call unconditionally on their own userId.
-  async deleteDemoUser(userId: string) {
-    const { count } = await prisma.user.deleteMany({
-      where: { id: userId, isDemo: true },
-    });
-    return { deleted: count > 0 };
   },
 };

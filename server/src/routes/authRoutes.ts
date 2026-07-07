@@ -3,7 +3,6 @@ import rateLimit from 'express-rate-limit';
 import { authController } from '../controllers/authController';
 import { requireAuth, requireSessionAuth } from '../middleware/auth';
 import {
-  demoLoginLimiter,
   forgotPasswordLimiter,
   loginIpLimiter,
   makeAccountLoginLimiter,
@@ -72,16 +71,6 @@ router.post('/resend-verification', resendVerificationLimiter, authController.re
 router.get('/challenge', challengeLimiter, authController.challenge);
 router.get('/me', requireAuth, authController.me);
 
-// Anonymous "Try Live Demo" entry point: creates an isolated, temporary demo
-// user + seeded portfolio and returns a session token, same shape as
-// login/register. No PoW challenge — there's no credential to guess, just an
-// account-farming rate to cap.
-router.post('/demo-login', demoLoginLimiter, authController.demoLogin);
-
-// Lets a demo user's session clean up its own data immediately on logout,
-// instead of waiting for the periodic sweep. Safe no-op for a real user.
-router.delete('/demo-session', requireAuth, authController.deleteDemoSession);
-
 // Session refresh: issues a new short-lived JWT if the current session JWT is
 // still valid and within the absolute lifetime cap. PATs are rejected (they
 // have their own expiry). Rate-limited generously since active users hit this
@@ -110,17 +99,5 @@ const purgeLimiter = rateLimit({
   legacyHeaders: false,
 });
 router.post('/purge-tokens', purgeLimiter, requireAdminKey, authController.purgeTokens);
-
-// Maintenance: manually trigger the expired-demo-user sweep on demand (the
-// in-process interval in index.ts already runs this periodically — this is
-// for ops/on-demand use, same admin-key guard as purge-tokens).
-const purgeDemoUsersLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: { error: 'Too many purge requests, please try again later' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-router.post('/purge-demo-users', purgeDemoUsersLimiter, requireAdminKey, authController.purgeDemoUsers);
 
 export default router;

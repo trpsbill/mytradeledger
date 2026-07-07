@@ -81,11 +81,10 @@ afterAll(async () => {
 
 describe('authService.register', () => {
   it('creates a user with a bcrypt-hashed password (never plaintext) and a valid JWT', async () => {
-    const { user, token } = await authService.register('Trader@Example.com', 'hunter2pw', true);
+    const { user, token } = await authService.register('Trader@Example.com', 'hunter2pw');
 
     // Email is normalised to lowercase
     expect(user.email).toBe('trader@example.com');
-    expect(user.marketingOptIn).toBe(true);
 
     // Password is hashed, not stored in the clear
     expect(user.passwordHash).not.toBe('hunter2pw');
@@ -103,7 +102,7 @@ describe('authService.register', () => {
   });
 
   it('new accounts start unverified and trigger exactly one verification email', async () => {
-    const { user } = await authService.register('verify@me.com', 'password123', false);
+    const { user } = await authService.register('verify@me.com', 'password123');
 
     expect(user.emailVerifiedAt).toBeNull();
     expect(sentVerificationTokens).toHaveLength(1);
@@ -117,8 +116,8 @@ describe('authService.register', () => {
   });
 
   it('rejects a duplicate email (case-insensitive) with EMAIL_IN_USE', async () => {
-    await authService.register('dupe@example.com', 'password123', false);
-    await expect(authService.register('DUPE@example.com', 'password123', false)).rejects.toThrow(
+    await authService.register('dupe@example.com', 'password123');
+    await expect(authService.register('DUPE@example.com', 'password123')).rejects.toThrow(
       'EMAIL_IN_USE'
     );
     expect(await prisma.user.count()).toBe(1);
@@ -133,7 +132,7 @@ describe('authService.register', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const { user, token } = await withFailingTokenCreate(() =>
-      authService.register('resilient@example.com', 'password123', false)
+      authService.register('resilient@example.com', 'password123')
     );
 
     try {
@@ -161,7 +160,7 @@ describe('authService.register', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const { user } = await withFailingTokenCreate(() =>
-      authService.register('recover@example.com', 'password123', false)
+      authService.register('recover@example.com', 'password123')
     );
     errorSpy.mockRestore();
 
@@ -182,7 +181,7 @@ describe('authService.register', () => {
 
 describe('authService.login', () => {
   beforeEach(async () => {
-    await authService.register('login@example.com', 'correct-horse', false);
+    await authService.register('login@example.com', 'correct-horse');
   });
 
   it('succeeds with correct credentials and returns a JWT with loginAt', async () => {
@@ -219,7 +218,7 @@ describe('authService.login', () => {
 
 describe('authService.verifyEmail', () => {
   it('verifies the address with a valid token and consumes the token', async () => {
-    const { user } = await authService.register('confirm@example.com', 'password123', false);
+    const { user } = await authService.register('confirm@example.com', 'password123');
     const rawToken = sentVerificationTokens[0].token;
 
     await authService.verifyEmail(rawToken);
@@ -234,7 +233,7 @@ describe('authService.verifyEmail', () => {
   });
 
   it('is idempotent — a double click on the link still resolves to success', async () => {
-    await authService.register('confirm2@example.com', 'password123', false);
+    await authService.register('confirm2@example.com', 'password123');
     const rawToken = sentVerificationTokens[0].token;
 
     await authService.verifyEmail(rawToken);
@@ -248,7 +247,7 @@ describe('authService.verifyEmail', () => {
   });
 
   it('rejects an unused-but-expired token', async () => {
-    const { user } = await authService.register('expired@example.com', 'password123', false);
+    const { user } = await authService.register('expired@example.com', 'password123');
     // Force the token to be in the past
     await prisma.emailVerificationToken.updateMany({
       where: { userId: user.id },
@@ -263,7 +262,7 @@ describe('authService.verifyEmail', () => {
   // usedAt is checked before expiry, so an already-verified user re-clicking an
   // old (now-expired) link still resolves to success, not an error.
   it('treats a used-AND-expired token as idempotent success (#16)', async () => {
-    const { user } = await authService.register('usedexpired@example.com', 'password123', false);
+    const { user } = await authService.register('usedexpired@example.com', 'password123');
     const rawToken = sentVerificationTokens[0].token;
 
     // First click verifies and consumes the token.
@@ -284,7 +283,7 @@ describe('authService.verifyEmail', () => {
 
 describe('authService.resendVerification', () => {
   it('issues a fresh token and invalidates the prior unused one', async () => {
-    const { user } = await authService.register('resend@example.com', 'password123', false);
+    const { user } = await authService.register('resend@example.com', 'password123');
     const firstToken = sentVerificationTokens[0].token;
 
     await authService.resendVerification('resend@example.com');
@@ -305,7 +304,7 @@ describe('authService.resendVerification', () => {
   });
 
   it('silently no-ops for an already-verified account', async () => {
-    await authService.register('already@example.com', 'password123', false);
+    await authService.register('already@example.com', 'password123');
     await authService.verifyEmail(sentVerificationTokens[0].token);
     sentVerificationTokens.length = 0;
 
@@ -318,7 +317,7 @@ describe('authService.resendVerification', () => {
 
 describe('authService password reset flow', () => {
   it('requestPasswordReset emails a token and stores it hashed', async () => {
-    const { user } = await authService.register('reset@example.com', 'old-password', false);
+    const { user } = await authService.register('reset@example.com', 'old-password');
 
     await authService.requestPasswordReset('reset@example.com');
 
@@ -334,7 +333,7 @@ describe('authService password reset flow', () => {
   });
 
   it('resetPassword updates the hash so the new password logs in and the old one fails', async () => {
-    await authService.register('change@example.com', 'old-password', false);
+    await authService.register('change@example.com', 'old-password');
     await authService.requestPasswordReset('change@example.com');
     const rawToken = sentResetTokens[0].token;
 
@@ -347,7 +346,7 @@ describe('authService password reset flow', () => {
   });
 
   it('a reset token is single-use', async () => {
-    await authService.register('single@example.com', 'old-password', false);
+    await authService.register('single@example.com', 'old-password');
     await authService.requestPasswordReset('single@example.com');
     const rawToken = sentResetTokens[0].token;
 
@@ -358,7 +357,7 @@ describe('authService password reset flow', () => {
   });
 
   it('rejects an expired reset token', async () => {
-    const { user } = await authService.register('stale@example.com', 'old-password', false);
+    const { user } = await authService.register('stale@example.com', 'old-password');
     await authService.requestPasswordReset('stale@example.com');
     await prisma.passwordResetToken.updateMany({
       where: { userId: user.id },
@@ -374,7 +373,7 @@ describe('authService password reset flow', () => {
   // the send (and the token write) beyond that while keeping the generic outcome.
   it('throttles repeated reset requests for the same email (no mail-bombing)', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { user } = await authService.register('bomb@example.com', 'old-password', false);
+    const { user } = await authService.register('bomb@example.com', 'old-password');
 
     // Five back-to-back requests; only the first three (default perEmailMax) send.
     for (let i = 0; i < 5; i++) {
@@ -390,7 +389,7 @@ describe('authService password reset flow', () => {
   });
 
   it('requesting a new reset token invalidates the prior unused one', async () => {
-    await authService.register('rotate@example.com', 'old-password', false);
+    await authService.register('rotate@example.com', 'old-password');
     await authService.requestPasswordReset('rotate@example.com');
     const firstToken = sentResetTokens[0].token;
 
@@ -408,7 +407,7 @@ describe('authService password reset flow', () => {
 
 describe('authService.purgeTokens', () => {
   it('purges used email verification tokens', async () => {
-    await authService.register('purge-used-verify@example.com', 'password123', false);
+    await authService.register('purge-used-verify@example.com', 'password123');
     const rawToken = sentVerificationTokens[0].token;
     await authService.verifyEmail(rawToken);
 
@@ -421,7 +420,7 @@ describe('authService.purgeTokens', () => {
   });
 
   it('purges expired email verification tokens', async () => {
-    const { user } = await authService.register('purge-expired-verify@example.com', 'password123', false);
+    const { user } = await authService.register('purge-expired-verify@example.com', 'password123');
     await prisma.emailVerificationToken.updateMany({
       where: { userId: user.id },
       data: { expiresAt: new Date(Date.now() - 1000) },
@@ -434,7 +433,7 @@ describe('authService.purgeTokens', () => {
   });
 
   it('does not purge active (unused, non-expired) verification tokens', async () => {
-    await authService.register('keep-active@example.com', 'password123', false);
+    await authService.register('keep-active@example.com', 'password123');
 
     const result = await authService.purgeTokens();
 
@@ -444,7 +443,7 @@ describe('authService.purgeTokens', () => {
   });
 
   it('purges used password reset tokens', async () => {
-    await authService.register('purge-used-reset@example.com', 'old-password', false);
+    await authService.register('purge-used-reset@example.com', 'old-password');
     await authService.requestPasswordReset('purge-used-reset@example.com');
     const rawToken = sentResetTokens[0].token;
     await authService.resetPassword(rawToken, 'new-password');
@@ -456,7 +455,7 @@ describe('authService.purgeTokens', () => {
   });
 
   it('purges expired password reset tokens', async () => {
-    const { user } = await authService.register('purge-expired-reset@example.com', 'old-password', false);
+    const { user } = await authService.register('purge-expired-reset@example.com', 'old-password');
     await authService.requestPasswordReset('purge-expired-reset@example.com');
     await prisma.passwordResetToken.updateMany({
       where: { userId: user.id },
@@ -469,7 +468,7 @@ describe('authService.purgeTokens', () => {
   });
 
   it('does not purge active (unused, non-expired) reset tokens', async () => {
-    await authService.register('keep-reset@example.com', 'old-password', false);
+    await authService.register('keep-reset@example.com', 'old-password');
     await authService.requestPasswordReset('keep-reset@example.com');
 
     const result = await authService.purgeTokens();
@@ -480,10 +479,10 @@ describe('authService.purgeTokens', () => {
   });
 
   it('purges both token types in a single call', async () => {
-    await authService.register('purge-both@example.com', 'password123', false);
+    await authService.register('purge-both@example.com', 'password123');
     await authService.verifyEmail(sentVerificationTokens[0].token);
 
-    const { user } = await authService.register('purge-both-2@example.com', 'old-password', false);
+    const { user } = await authService.register('purge-both-2@example.com', 'old-password');
     await authService.requestPasswordReset('purge-both-2@example.com');
     await prisma.passwordResetToken.updateMany({
       where: { userId: user.id },
@@ -507,7 +506,7 @@ describe('authService.purgeTokens', () => {
 
 describe('authService.refreshSession', () => {
   beforeEach(async () => {
-    await authService.register('login@example.com', 'correct-horse', false);
+    await authService.register('login@example.com', 'correct-horse');
   });
 
   it('issues a new JWT with the same loginAt but a fresh exp', async () => {

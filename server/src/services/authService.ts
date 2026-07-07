@@ -40,7 +40,7 @@ async function issueVerificationEmail(user: { id: string; email: string }) {
 }
 
 export const authService = {
-  async register(email: string, password: string, marketingOptIn: boolean) {
+  async register(email: string, password: string) {
     const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (existing) {
       throw new Error('EMAIL_IN_USE');
@@ -51,7 +51,6 @@ export const authService = {
       data: {
         email: email.toLowerCase(),
         passwordHash,
-        marketingOptIn,
       },
     });
 
@@ -82,7 +81,7 @@ export const authService = {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, isPaid: true, isDemo: true },
+      select: { id: true, email: true },
     });
     if (!user) throw new Error('USER_NOT_FOUND');
 
@@ -109,9 +108,6 @@ export const authService = {
       select: {
         id: true,
         email: true,
-        isPaid: true,
-        isDemo: true,
-        marketingOptIn: true,
         emailVerifiedAt: true,
         createdAt: true,
       },
@@ -156,10 +152,9 @@ export const authService = {
 
   async resendVerification(email: string) {
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-    // Silently no-op for unknown accounts (no enumeration), for accounts that
-    // are already verified (nothing to send), and for demo accounts (never sent
-    // any mail to begin with).
-    if (!user || user.emailVerifiedAt || user.isDemo) {
+    // Silently no-op for unknown accounts (no enumeration) or accounts that are
+    // already verified (nothing to send).
+    if (!user || user.emailVerifiedAt) {
       return;
     }
 
@@ -177,9 +172,8 @@ export const authService = {
 
   async requestPasswordReset(email: string) {
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-    // Silently no-op when the account does not exist (no enumeration) or is a
-    // demo account (no password worth resetting, no mail ever sent to it).
-    if (!user || user.isDemo) {
+    // Silently no-op when the account does not exist, to avoid enumeration.
+    if (!user) {
       return;
     }
 
@@ -269,7 +263,7 @@ export const authService = {
 };
 
 export function signToken(
-  user: { id: string; email: string; isPaid: boolean; isDemo?: boolean },
+  user: { id: string; email: string },
   loginAt?: number
 ) {
   const now = Math.floor(Date.now() / 1000);
@@ -277,8 +271,6 @@ export function signToken(
     {
       userId: user.id,
       email: user.email,
-      isPaid: user.isPaid,
-      isDemo: user.isDemo ?? false,
       loginAt: loginAt ?? now,
     },
     process.env.JWT_SECRET!,

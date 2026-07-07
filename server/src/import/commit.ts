@@ -7,7 +7,6 @@ import { PRESETS, generic } from './presets';
 import { checkDupes } from './dedupeCheck';
 import { calculateValueBase, toSignedQuantity } from '../services/pnlCalculations';
 import { ledgerService } from '../services/ledgerService';
-import { FREE_LIMIT, FREE_IMPORT_CAP } from '../services/billingService';
 import type { ImportPreset, NormalizedTrade } from './types';
 
 const VALID_PRESET_IDS = Object.keys(PRESETS);
@@ -169,38 +168,10 @@ export async function commitHandler(req: Request, res: Response): Promise<void> 
       preset = PRESETS[presetId];
     }
 
-    const { trades: allTrades } = parseCsv(fileText, preset);
+    const { trades } = parseCsv(fileText, preset);
     const userId = req.user!.userId;
 
-    // Enforce free-tier import cap (requirePaid already blocked at-limit users)
-    let trades = allTrades;
-    const freeUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        isPaid: true,
-        accounts: { where: { isDemo: false }, select: { _count: { select: { ledgerEntries: true } } } },
-      },
-    });
-    if (!freeUser?.isPaid) {
-      const currentCount = (freeUser?.accounts ?? []).reduce((s, a) => s + a._count.ledgerEntries, 0);
-      const slotsLeft = Math.max(0, FREE_LIMIT - currentCount);
-      const importCap = Math.min(FREE_IMPORT_CAP, slotsLeft);
-      trades = allTrades.slice(0, importCap);
-    }
-
     const result = await commitImport(trades, userId, accountName.trim(), presetId, prisma);
-
-    // Mark hasHitFreeLimit if the new total crosses the threshold
-    if (result.succeeded && result.importedCount > 0 && !freeUser?.isPaid) {
-      prisma.ledgerEntry
-        .count({ where: { account: { userId, isDemo: false } } })
-        .then(async (total) => {
-          if (total >= FREE_LIMIT) {
-            await prisma.user.update({ where: { id: userId }, data: { hasHitFreeLimit: true } });
-          }
-        })
-        .catch(() => {});
-    }
 
     if (!result.succeeded) {
       res.status(500).json({ error: result.error ?? 'Import failed' });

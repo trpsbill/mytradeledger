@@ -26,9 +26,8 @@ beforeAll(() => {
   app.use(express.json());
   // Stub auth: inject a fake user so requireAuth is not needed
   app.use((req, _res, next) => {
-    (req as express.Request & { user: { userId: string; isPaid: boolean } }).user = {
+    (req as express.Request & { user: { userId: string } }).user = {
       userId: 'test-user-id',
-      isPaid: true,
     };
     next();
   });
