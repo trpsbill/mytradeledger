@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "is_demo" BOOLEAN NOT NULL DEFAULT false;
