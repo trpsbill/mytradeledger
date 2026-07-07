@@ -36,25 +36,22 @@ export function AuthApiPage() {
           auth={false}
           description="Create a new user account. Returns a JWT token valid for 30 days along with the created user profile."
           requestBody={`{
-  "email":           "you@example.com",   // required
-  "password":        "minlength8",        // required, minimum 8 characters
-  "marketingOptIn":  false                // optional, defaults to false
+  "email":    "you@example.com",   // required
+  "password": "minlength8"         // required, minimum 8 characters
 }`}
           response={`{
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
-      "id":             "clxyz123...",
-      "email":          "you@example.com",
-      "isPaid":         false,
-      "marketingOptIn": false,
-      "createdAt":      "2026-06-03T12:00:00.000Z"
+      "id":        "clxyz123...",
+      "email":     "you@example.com",
+      "createdAt": "2026-06-03T12:00:00.000Z"
     }
   }
 }`}
           curl={`curl -X POST \\
   -H "Content-Type: application/json" \\
-  -d '{"email":"you@example.com","password":"securepass1","marketingOptIn":false}' \\
+  -d '{"email":"you@example.com","password":"securepass1"}' \\
   ${BASE}/auth/register`}
         />
 
@@ -71,11 +68,9 @@ export function AuthApiPage() {
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
-      "id":             "clxyz123...",
-      "email":          "you@example.com",
-      "isPaid":         false,
-      "marketingOptIn": false,
-      "createdAt":      "2026-06-03T12:00:00.000Z"
+      "id":        "clxyz123...",
+      "email":     "you@example.com",
+      "createdAt": "2026-06-03T12:00:00.000Z"
     }
   }
 }`}
@@ -91,11 +86,9 @@ export function AuthApiPage() {
           description="Return the full profile of the currently authenticated user. Useful for verifying token validity and fetching the user ID."
           response={`{
   "data": {
-    "id":             "clxyz123...",
-    "email":          "you@example.com",
-    "isPaid":         false,
-    "marketingOptIn": false,
-    "createdAt":      "2026-06-03T12:00:00.000Z"
+    "id":        "clxyz123...",
+    "email":     "you@example.com",
+    "createdAt": "2026-06-03T12:00:00.000Z"
   }
 }`}
           curl={`curl -H "Authorization: Bearer $TOKEN" \\

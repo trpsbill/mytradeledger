@@ -116,11 +116,6 @@ export function AppNavbar() {
                 </svg>
               </div>
               <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 w-48 p-2 shadow">
-                {!user.isDemo && (
-                  <li>
-                    <Link to="/app/settings/account">Account</Link>
-                  </li>
-                )}
                 <li>
                   <Link to="/app/settings/tokens">API Tokens</Link>
                 </li>

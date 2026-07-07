@@ -9,7 +9,4 @@ export { AccountsPage } from './Accounts';
 export { LedgerPage } from './Ledger';
 export { DocsLayout } from './Docs';
 export { ApiTokensPage } from './Settings/ApiTokensPage';
-export { AccountPage } from './Settings/AccountPage';
-export { TermsPage } from './Terms';
 export { PrivacyPage } from './Privacy';
-export { RefundPage } from './Refund/RefundPage';

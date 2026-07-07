@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LoadingSpinner, ErrorAlert, Modal, ConfirmDialog, PnlCell, FreeTierWarning, DemoAccountModal, DemoUpsellModal, Pagination, PageNavigator } from '../../components';
+import { LoadingSpinner, ErrorAlert, Modal, ConfirmDialog, PnlCell, DemoAccountModal, Pagination, PageNavigator } from '../../components';
 import { useApi, useApiWithMeta } from '../../hooks';
-import { useAuth } from '../../contexts/AuthContext';
 import { accountsApi, ledgerApi } from '../../services/api';
 import { LedgerEntryForm } from '../Ledger/LedgerEntryForm';
 import { ImportCsvModal } from '../../components/ImportCsvModal';
@@ -12,10 +11,8 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100];
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isImportUpsellOpen, setIsImportUpsellOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = useState<LedgerEntry | null>(null);
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
@@ -26,10 +23,9 @@ export function DashboardPage() {
     () => accountsApi.list(),
     []
   );
-  // A real user's isDemo account is just a bonus example portfolio, excluded
-  // here so it doesn't count as a "real" account. An anonymous demo session's
-  // only account IS that isDemo account, so for them it's the real thing.
-  const nonDemoAccounts = user?.isDemo ? (accounts ?? []) : (accounts ?? []).filter((a) => !a.isDemo);
+  // A user's isDemo account is just a bonus example portfolio, excluded here
+  // so it doesn't count as a "real" account for empty-state purposes.
+  const nonDemoAccounts = (accounts ?? []).filter((a) => !a.isDemo);
   const showAccountColumn = nonDemoAccounts.length > 1;
   const hasNoAccounts = !accountsLoading && nonDemoAccounts.length === 0;
   const { data: entries, loading: entriesLoading, error: entriesError, refetch: refetchEntries, meta: entriesMeta } = useApiWithMeta(
@@ -65,7 +61,6 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      <FreeTierWarning />
       {/* Header with action buttons */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
         <h1 className="text-2xl font-bold">Dashboard</h1>
@@ -77,7 +72,7 @@ export function DashboardPage() {
           )}
           <button
             className="btn btn-outline"
-            onClick={() => user?.isDemo ? setIsImportUpsellOpen(true) : setIsImportModalOpen(true)}
+            onClick={() => setIsImportModalOpen(true)}
           >
             Import CSV
           </button>
@@ -238,7 +233,7 @@ export function DashboardPage() {
                   <button className="btn btn-primary" onClick={() => navigate('/app/accounts')}>
                     Add Trading Account
                   </button>
-                  <div className="tooltip" data-tip="Load sample crypto trades to explore the app — won't use your free tier slots">
+                  <div className="tooltip" data-tip="Load sample crypto trades to explore the app">
                     <button className="btn btn-outline" onClick={() => setIsDemoModalOpen(true)}>
                       Load Demo Account
                     </button>
@@ -254,7 +249,7 @@ export function DashboardPage() {
                   <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
                     Add Your First Trade
                   </button>
-                  <div className="tooltip" data-tip="Load sample crypto trades to explore the app — won't use your free tier slots">
+                  <div className="tooltip" data-tip="Load sample crypto trades to explore the app">
                     <button className="btn btn-outline" onClick={() => setIsDemoModalOpen(true)}>
                       Load Demo Account
                     </button>
@@ -307,12 +302,6 @@ export function DashboardPage() {
         isOpen={isDemoModalOpen}
         onClose={() => setIsDemoModalOpen(false)}
         onLoaded={() => { void refetchAccounts(); refetchEntries(); }}
-      />
-
-      <DemoUpsellModal
-        isOpen={isImportUpsellOpen}
-        onClose={() => setIsImportUpsellOpen(false)}
-        feature="Importing trades"
       />
 
       {/* Delete Confirmation */}

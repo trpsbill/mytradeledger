@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { LoadingSpinner, ErrorAlert, EmptyState, Modal, ConfirmDialog, PnlCell, FreeTierWarning, DemoAccountModal, Pagination, PageNavigator } from '../../components';
+import { LoadingSpinner, ErrorAlert, EmptyState, Modal, ConfirmDialog, PnlCell, DemoAccountModal, Pagination, PageNavigator } from '../../components';
 import { useApi, useApiWithMeta } from '../../hooks';
-import { useAuth } from '../../contexts/AuthContext';
 import { accountsApi, ledgerApi } from '../../services/api';
 import { LedgerEntryForm } from './LedgerEntryForm';
 import type { LedgerEntry, CreateLedgerEntryRequest, EntryType } from '../../types';
@@ -16,7 +15,6 @@ const ENTRY_TYPE_COLORS: Record<EntryType, string> = {
 
 export function LedgerPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
@@ -63,10 +61,9 @@ export function LedgerPage() {
   }, [meta]);
 
   const { data: accounts, loading: accountsLoading } = useApi(() => accountsApi.list(), []);
-  // A real user's isDemo account is just a bonus example portfolio, excluded
-  // here so it doesn't count as a "real" account. An anonymous demo session's
-  // only account IS that isDemo account, so for them it's the real thing.
-  const nonDemoAccounts = user?.isDemo ? (accounts ?? []) : (accounts ?? []).filter((a) => !a.isDemo);
+  // A user's isDemo account is just a bonus example portfolio, excluded here
+  // so it doesn't count as a "real" account for empty-state purposes.
+  const nonDemoAccounts = (accounts ?? []).filter((a) => !a.isDemo);
   const showAccountFilter = nonDemoAccounts.length > 1;
   const hasNoAccounts = !accountsLoading && nonDemoAccounts.length === 0;
 
@@ -180,7 +177,6 @@ export function LedgerPage() {
 
   return (
     <div>
-      <FreeTierWarning />
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-6">
         <h1 className="text-2xl font-bold">Ledger</h1>
         <div className="flex flex-wrap gap-2">
@@ -286,7 +282,7 @@ export function LedgerPage() {
             secondaryAction={!hasActiveFilters ? {
               label: 'Load Demo Account',
               onClick: () => setIsDemoModalOpen(true),
-              tooltip: 'Load sample crypto trades to explore the app — won\'t use your free tier slots',
+              tooltip: 'Load sample crypto trades to explore the app',
             } : undefined}
           />
         )

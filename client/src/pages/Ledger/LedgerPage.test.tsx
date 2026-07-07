@@ -4,7 +4,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { LedgerPage } from './LedgerPage';
 import { LedgerEntryForm } from './LedgerEntryForm';
 import { useApi, useApiWithMeta } from '../../hooks';
-import { useAuth } from '../../contexts/AuthContext';
 import type { LedgerEntry, Account } from '../../types';
 
 const mockNavigate = vi.fn();
@@ -22,31 +21,9 @@ vi.mock('../../hooks', () => ({
   useApiWithMeta: vi.fn(),
 }));
 
-vi.mock('../../contexts/AuthContext', () => ({ useAuth: vi.fn() }));
-
-type AuthReturn = ReturnType<typeof useAuth>;
-
-function baseAuth(overrides: Partial<AuthReturn> = {}): AuthReturn {
-  return {
-    user: { id: '1', email: 'test@example.com', isPaid: false, emailVerified: true, isDemo: false },
-    token: 'jwt',
-    loading: false,
-    sessionWarning: null,
-    signupsEnabled: true,
-    login: vi.fn(),
-    register: vi.fn(),
-    refreshUser: vi.fn(),
-    keepAlive: vi.fn(),
-    logout: vi.fn(),
-    loginAsDemo: vi.fn(),
-    ...overrides,
-  };
-}
-
 vi.mock('../../services/api', () => ({
   accountsApi: { list: vi.fn(), getPnL: vi.fn(), getBalance: vi.fn(), seedDemo: vi.fn() },
   ledgerApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), deleteBatch: vi.fn(), clearAll: vi.fn(), exportCsv: vi.fn() },
-  billingApi: { getStatus: vi.fn() },
 }));
 
 const ACCOUNT: Account = {
@@ -92,7 +69,6 @@ function setup(entries: LedgerEntry[] = [BUY, SELL_WITH_FEE_AND_NOTES]) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(useAuth).mockReturnValue(baseAuth());
 });
 
 describe('LedgerPage — empty state', () => {
@@ -327,34 +303,3 @@ describe('LedgerPage — no accounts state', () => {
   });
 });
 
-describe('LedgerPage — demo user whose only account is isDemo', () => {
-  const DEMO_ACCOUNT: Account = {
-    id: 'demo-acc-1', name: 'Demo Portfolio', baseCurrency: 'USD',
-    isDefault: false, isDemo: true, createdAt: '2026-01-01T00:00:00Z', archivedAt: null,
-  };
-
-  function setupDemoUser() {
-    vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: 'demo-1', email: 'demo-abc@demo.mytradeledger.local', isPaid: false, emailVerified: true, isDemo: true } })
-    );
-    vi.mocked(useApiWithMeta).mockReturnValue({
-      data: [], loading: false, error: null, refetch: vi.fn(),
-      meta: { total: 0, limit: 50, offset: 0 },
-    });
-    vi.mocked(useApi)
-      .mockReturnValue(noData)
-      .mockReturnValueOnce({ data: [DEMO_ACCOUNT], loading: false, error: null, refetch: vi.fn() });
-    return render(<MemoryRouter><LedgerPage /></MemoryRouter>);
-  }
-
-  it('shows the "New Entry" button instead of "Add Trading Account"', () => {
-    setupDemoUser();
-    expect(screen.getByRole('button', { name: 'New Entry' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Add Trading Account' })).not.toBeInTheDocument();
-  });
-
-  it('does not show the "No trading accounts yet" empty state', () => {
-    setupDemoUser();
-    expect(screen.queryByText('No trading accounts yet')).not.toBeInTheDocument();
-  });
-});

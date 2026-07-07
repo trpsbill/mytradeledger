@@ -24,7 +24,6 @@ function baseAuth(overrides: Partial<AuthReturn> = {}): AuthReturn {
     refreshUser: vi.fn(),
     keepAlive: vi.fn(),
     logout: vi.fn(),
-    loginAsDemo: vi.fn(),
     ...overrides,
   };
 }

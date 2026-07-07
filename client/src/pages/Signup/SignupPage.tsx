@@ -2,7 +2,6 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks';
-import { trackEvent } from '../../services/analytics';
 
 export function SignupPage() {
   const { register, signupsEnabled } = useAuth();
@@ -11,7 +10,6 @@ export function SignupPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -21,8 +19,7 @@ export function SignupPage() {
     setError('');
     setSubmitting(true);
     try {
-      await register(email, password, marketingOptIn, () => setVerifying(true));
-      trackEvent('sign_up');
+      await register(email, password, () => setVerifying(true));
       navigate('/app');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -124,20 +121,6 @@ export function SignupPage() {
                     />
                   </div>
 
-                  <div className="divider text-xs text-base-content/40">Optional</div>
-
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary mt-0.5"
-                      checked={marketingOptIn}
-                      onChange={e => setMarketingOptIn(e.target.checked)}
-                    />
-                    <span className="text-sm text-base-content/70 leading-snug">
-                      Send me occasional product updates and tips. You can unsubscribe at any time.
-                    </span>
-                  </label>
-
                   <button
                     type="submit"
                     className="btn btn-primary w-full mt-2"
@@ -155,10 +138,6 @@ export function SignupPage() {
                     )}
                   </button>
                 </form>
-
-                <p className="text-xs text-base-content/50 text-center mt-4">
-                  By creating an account you agree to our Terms of Service.
-                </p>
               </>
             )}
           </div>

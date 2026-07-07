@@ -24,7 +24,6 @@ function baseAuth(overrides: Partial<AuthReturn> = {}): AuthReturn {
     refreshUser: vi.fn(),
     keepAlive: vi.fn(),
     logout: vi.fn(),
-    loginAsDemo: vi.fn(),
     ...overrides,
   };
 }
@@ -54,7 +53,7 @@ describe('DocsLayout header', () => {
   });
 
   it('shows full app nav with user email and no Log In when logged in', () => {
-    renderDocsLayout({ id: '1', email: 'user@example.com', isPaid: false, emailVerified: true, isDemo: false });
+    renderDocsLayout({ id: '1', email: 'user@example.com', emailVerified: true });
     expect(screen.getByText('user@example.com')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /log in/i })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import type { Account, LedgerEntry, CreateLedgerEntryRequest, EntryType } from '../../types';
 
 interface LedgerEntryFormProps {
@@ -12,11 +11,9 @@ interface LedgerEntryFormProps {
 }
 
 export function LedgerEntryForm({ entry, accounts = [], accountsLoading = false, initialAccountId, onSubmit, onCancel }: LedgerEntryFormProps) {
-  const { user } = useAuth();
-  // A real user's isDemo account is just a bonus example portfolio, excluded
-  // here so it doesn't count as a "real" account. An anonymous demo session's
-  // only account IS that isDemo account, so for them it's the real thing.
-  const nonDemoAccounts = user?.isDemo ? accounts : accounts.filter((a) => !a.isDemo);
+  // A user's isDemo account is just a bonus example portfolio, excluded here
+  // so it doesn't count as a "real" account for the account picker.
+  const nonDemoAccounts = accounts.filter((a) => !a.isDemo);
   const hasMultipleChoices = nonDemoAccounts.length > 1;
 
   // With multiple accounts and no pre-selected account, leave blank to force a choice.

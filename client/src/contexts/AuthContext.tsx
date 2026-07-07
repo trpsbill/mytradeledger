@@ -1,14 +1,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { withPowRetry } from '../services/pow';
 import { authApi } from '../services/api';
-import { identifyUser, track } from '../services/betterstack';
 
 interface AuthUser {
   id: string;
   email: string;
-  isPaid: boolean;
   emailVerified: boolean;
-  isDemo: boolean;
 }
 
 interface SessionWarning {
@@ -25,13 +22,11 @@ interface AuthContextValue {
   register: (
     email: string,
     password: string,
-    marketingOptIn: boolean,
     onSolving?: () => void
   ) => Promise<void>;
   refreshUser: () => Promise<void>;
   keepAlive: () => Promise<void>;
   logout: () => void;
-  loginAsDemo: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -108,25 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // Identify the signed-in user to the Better Stack browser snippet whenever
-  // the user becomes known (session restore, login, register, refreshUser).
-  useEffect(() => {
-    if (user) identifyUser(user);
-  }, [user]);
-
   const logout = useCallback(() => {
-    // Clean up demo data immediately on logout rather than waiting for the
-    // scheduled sweep. Best-effort: fired before the token is cleared (so it's
-    // still attached to the request) but not awaited — logout should feel
-    // instant regardless of the network round-trip.
-    if (user?.isDemo) {
-      authApi.deleteDemoSession().catch(() => {});
-    }
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);
     setSessionWarning(null);
-  }, [user]);
+  }, []);
 
   // Force logout on any 401 from the API layer
   useEffect(() => {
@@ -217,27 +199,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const register = useCallback(
-    async (email: string, password: string, marketingOptIn: boolean, onSolving?: () => void) => {
+    async (email: string, password: string, onSolving?: () => void) => {
       const { token, user } = await authRequest(
         '/auth/register',
-        { email, password, marketingOptIn },
+        { email, password },
         onSolving
       );
       localStorage.setItem(TOKEN_KEY, token);
       setToken(token);
       setUser(user);
-      track('signup', { userId: user.id, email: user.email });
     },
     []
   );
-
-  const loginAsDemo = useCallback(async () => {
-    const { token, user } = await authApi.demoLogin();
-    localStorage.setItem(TOKEN_KEY, token);
-    setToken(token);
-    setUser(user);
-    track('demo_start', { userId: user.id });
-  }, []);
 
   const refreshUser = useCallback(async () => {
     const stored = localStorage.getItem(TOKEN_KEY);
@@ -252,7 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, sessionWarning, signupsEnabled, login, register, refreshUser, keepAlive, logout, loginAsDemo }}>
+    <AuthContext.Provider value={{ user, token, loading, sessionWarning, signupsEnabled, login, register, refreshUser, keepAlive, logout }}>
       {children}
     </AuthContext.Provider>
   );

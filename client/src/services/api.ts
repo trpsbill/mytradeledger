@@ -35,13 +35,6 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     if (response.status === 401) {
       window.dispatchEvent(new CustomEvent('mtl:unauthorized'));
     }
-    if (response.status === 402) {
-      window.dispatchEvent(
-        new CustomEvent('mtl:paywall', {
-          detail: { current: error.current as number, limit: error.limit as number },
-        })
-      );
-    }
     throw new Error(error.error || 'Request failed');
   }
 
@@ -55,18 +48,6 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 // Auth API (public — no token required)
 export const authApi = {
   getConfig: () => request<{ data: { signupsEnabled: boolean } }>('/auth/config'),
-
-  demoLogin: async () => {
-    const res = await request<{
-      data: {
-        token: string;
-        user: { id: string; email: string; isPaid: boolean; emailVerified: boolean; isDemo: boolean };
-      };
-    }>('/auth/demo-login', { method: 'POST' });
-    return res.data;
-  },
-
-  deleteDemoSession: () => request<void>('/auth/demo-session', { method: 'DELETE' }),
 
   refresh: async (): Promise<{ token: string }> => {
     const stored = localStorage.getItem(TOKEN_KEY);
@@ -218,27 +199,6 @@ export const ledgerApi = {
 
   clearAll: () =>
     request<ApiResponse<{ deleted: number }>>('/ledger/all', { method: 'DELETE' }),
-};
-
-// Billing API
-export const billingApi = {
-  getStatus: () =>
-    request<ApiResponse<{ isPaid: boolean; hasHitFreeLimit: boolean; tradeCount: number; limit: number; hasSubscription: boolean }>>('/billing/status'),
-
-  createCheckoutSession: (plan: 'monthly' | 'yearly', gaClientId?: string) =>
-    request<{ data: { url: string } }>('/billing/checkout-session', {
-      method: 'POST',
-      body: JSON.stringify({ plan, gaClientId }),
-    }),
-
-  cancelSubscription: (reason?: string) =>
-    request<{ ok: true }>('/billing/cancel', {
-      method: 'POST',
-      body: JSON.stringify({ reason }),
-    }),
-
-  createPortalSession: () =>
-    request<{ data: { url: string } }>('/billing/portal-session', { method: 'POST' }),
 };
 
 // Personal Access Tokens API

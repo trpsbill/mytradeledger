@@ -171,30 +171,6 @@ describe('endpoint wiring', () => {
     await expect(authApi.refresh()).rejects.toThrow('Session has expired');
   });
 
-  it('authApi.demoLogin POSTs to /auth/demo-login and returns the token + user', async () => {
-    const user = { id: 'demo-1', email: 'demo-abc@demo.mytradeledger.local', isPaid: false, emailVerified: true, isDemo: true };
-    const fetchMock = mockFetch({ status: 201, jsonData: { data: { token: 'demo-jwt', user } } });
-
-    const result = await authApi.demoLogin();
-
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('/api/auth/demo-login');
-    expect((init as RequestInit).method).toBe('POST');
-    expect(result).toEqual({ token: 'demo-jwt', user });
-  });
-
-  it('authApi.demoLogin throws with the server error message on failure', async () => {
-    mockFetch({ ok: false, status: 429, jsonData: { error: 'Too many demo sessions started from this network, please try again later' } });
-    await expect(authApi.demoLogin()).rejects.toThrow('Too many demo sessions');
-  });
-
-  it('authApi.deleteDemoSession issues a DELETE to /auth/demo-session', async () => {
-    const fetchMock = mockFetch({ status: 204, jsonData: undefined });
-    await authApi.deleteDemoSession();
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('/api/auth/demo-session');
-    expect((init as RequestInit).method).toBe('DELETE');
-  });
 });
 
 describe('request — 401 unauthorized event', () => {

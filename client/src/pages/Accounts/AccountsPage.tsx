@@ -1,26 +1,19 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LoadingSpinner, ErrorAlert, EmptyState, Modal, ConfirmDialog, DemoUpsellModal } from '../../components';
+import { LoadingSpinner, ErrorAlert, EmptyState, Modal, ConfirmDialog } from '../../components';
 import { useApi } from '../../hooks';
-import { useAuth } from '../../contexts/AuthContext';
 import { accountsApi } from '../../services/api';
 import { AccountForm } from './AccountForm';
 import type { Account, CreateAccountRequest } from '../../types';
 
 export function AccountsPage() {
-  const { user } = useAuth();
   const [showArchived, setShowArchived] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDemoUpsellOpen, setIsDemoUpsellOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null);
 
   function handleNewAccountClick() {
-    if (user?.isDemo) {
-      setIsDemoUpsellOpen(true);
-    } else {
-      setIsModalOpen(true);
-    }
+    setIsModalOpen(true);
   }
 
   const { data: accounts, loading, error, refetch } = useApi(
@@ -139,12 +132,6 @@ export function AccountsPage() {
         message={`Are you sure you want to delete "${deletingAccount?.name}"? This will also delete all ledger entries for this account. This action cannot be undone.`}
         confirmLabel="Delete"
         variant="danger"
-      />
-
-      <DemoUpsellModal
-        isOpen={isDemoUpsellOpen}
-        onClose={() => setIsDemoUpsellOpen(false)}
-        feature="Adding another trading account"
       />
     </div>
   );

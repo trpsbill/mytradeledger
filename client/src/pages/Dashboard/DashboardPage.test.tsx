@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { DashboardPage } from './DashboardPage';
 import { useApi, useApiWithMeta } from '../../hooks';
-import { useAuth } from '../../contexts/AuthContext';
 import type { LedgerEntry, Account } from '../../types';
 
 const mockNavigate = vi.fn();
@@ -17,32 +16,10 @@ vi.mock('../../hooks', () => ({
   useApiWithMeta: vi.fn(),
 }));
 
-vi.mock('../../contexts/AuthContext', () => ({ useAuth: vi.fn() }));
-
 vi.mock('../../services/api', () => ({
   accountsApi: { list: vi.fn(), getPnL: vi.fn(), getBalance: vi.fn(), seedDemo: vi.fn() },
   ledgerApi: { list: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), exportCsv: vi.fn() },
-  billingApi: { getStatus: vi.fn() },
 }));
-
-type AuthReturn = ReturnType<typeof useAuth>;
-
-function baseAuth(overrides: Partial<AuthReturn> = {}): AuthReturn {
-  return {
-    user: { id: '1', email: 'test@example.com', isPaid: false, emailVerified: true, isDemo: false },
-    token: 'jwt',
-    loading: false,
-    sessionWarning: null,
-    signupsEnabled: true,
-    login: vi.fn(),
-    register: vi.fn(),
-    refreshUser: vi.fn(),
-    keepAlive: vi.fn(),
-    logout: vi.fn(),
-    loginAsDemo: vi.fn(),
-    ...overrides,
-  };
-}
 
 const ACCOUNT: Account = {
   id: 'acc-1', name: 'Main', baseCurrency: 'USD',
@@ -82,7 +59,6 @@ function setup(entries: LedgerEntry[] = [BUY, SELL]) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(useAuth).mockReturnValue(baseAuth());
 });
 
 describe('DashboardPage — empty state (has trading account, no entries)', () => {
@@ -135,38 +111,6 @@ describe('DashboardPage — no trading accounts state', () => {
     const buttons = screen.getAllByRole('button', { name: 'Add Trading Account' });
     buttons.forEach(btn => fireEvent.click(btn));
     expect(mockNavigate).toHaveBeenCalledWith('/app/accounts');
-  });
-});
-
-describe('DashboardPage — demo user whose only account is isDemo', () => {
-  const DEMO_ACCOUNT: Account = {
-    id: 'demo-acc-1', name: 'Demo Portfolio', baseCurrency: 'USD',
-    isDefault: false, isDemo: true, createdAt: '2026-01-01T00:00:00Z', archivedAt: null,
-  };
-
-  function setupDemoUser() {
-    vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: 'demo-1', email: 'demo-abc@demo.mytradeledger.local', isPaid: false, emailVerified: true, isDemo: true } })
-    );
-    vi.mocked(useApi)
-      .mockReturnValue(noData)
-      .mockReturnValueOnce({ data: [DEMO_ACCOUNT], loading: false, error: null, refetch: vi.fn() });
-    vi.mocked(useApiWithMeta).mockReturnValue({
-      data: [], loading: false, error: null, refetch: vi.fn(),
-      meta: { total: 0, limit: 50, offset: 0 },
-    });
-    return render(<MemoryRouter><DashboardPage /></MemoryRouter>);
-  }
-
-  it('shows "+ New Entry" instead of "Add Trading Account" in the header', () => {
-    setupDemoUser();
-    expect(screen.getByRole('button', { name: '+ New Entry' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Add Trading Account' })).not.toBeInTheDocument();
-  });
-
-  it('shows "Add Your First Trade" in the welcome card instead of the trading-account prompt', () => {
-    setupDemoUser();
-    expect(screen.getByRole('button', { name: /add your first trade/i })).toBeInTheDocument();
   });
 });
 
@@ -260,26 +204,3 @@ describe('DashboardPage — modal interactions', () => {
   });
 });
 
-describe('DashboardPage — Import CSV in demo mode', () => {
-  it('opens the import wizard for a real (non-demo) user', () => {
-    setup();
-    fireEvent.click(screen.getByRole('button', { name: 'Import CSV' }));
-    expect(screen.queryByText(/not available in demo mode/i)).not.toBeInTheDocument();
-  });
-
-  it('shows the demo upsell modal instead of the import wizard for a demo user', () => {
-    vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: 'demo-1', email: 'demo-abc@demo.mytradeledger.local', isPaid: false, emailVerified: true, isDemo: true } })
-    );
-    setup();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Import CSV' }));
-
-    expect(screen.getByText(/not available in demo mode/i)).toBeInTheDocument();
-    // The Modal's native <dialog> "open" state isn't reflected by the
-    // showModal() stub in the test environment, so getByRole can't resolve
-    // it as an accessible link here — assert via text + href directly.
-    const link = screen.getByText(/start free trial/i).closest('a');
-    expect(link).toHaveAttribute('href', '/signup');
-  });
-});

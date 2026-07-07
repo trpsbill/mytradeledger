@@ -1,33 +1,7 @@
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { LedgerEntryForm } from './LedgerEntryForm';
-import { useAuth } from '../../contexts/AuthContext';
 import type { Account } from '../../types';
-
-vi.mock('../../contexts/AuthContext', () => ({ useAuth: vi.fn() }));
-
-type AuthReturn = ReturnType<typeof useAuth>;
-
-function baseAuth(overrides: Partial<AuthReturn> = {}): AuthReturn {
-  return {
-    user: { id: '1', email: 'test@example.com', isPaid: false, emailVerified: true, isDemo: false },
-    token: 'jwt',
-    loading: false,
-    sessionWarning: null,
-    signupsEnabled: true,
-    login: vi.fn(),
-    register: vi.fn(),
-    refreshUser: vi.fn(),
-    keepAlive: vi.fn(),
-    logout: vi.fn(),
-    loginAsDemo: vi.fn(),
-    ...overrides,
-  };
-}
-
-beforeEach(() => {
-  vi.mocked(useAuth).mockReturnValue(baseAuth());
-});
 
 const COINBASE: Account = {
   id: 'acc-1', name: 'Coinbase', baseCurrency: 'USD',
@@ -72,20 +46,6 @@ describe('LedgerEntryForm — account picker visibility', () => {
     render(<LedgerEntryForm accounts={[COINBASE]} onSubmit={noop} onCancel={noop} />);
     const select = screen.getByRole('combobox') as HTMLSelectElement;
     expect(select.value).toBe('acc-1');
-  });
-});
-
-describe('LedgerEntryForm — anonymous demo user (isDemo account is their only account)', () => {
-  beforeEach(() => {
-    vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: 'demo-1', email: 'demo-abc@demo.mytradeledger.local', isPaid: false, emailVerified: true, isDemo: true } })
-    );
-  });
-
-  it('shows and pre-selects the account picker when the only account is isDemo', () => {
-    render(<LedgerEntryForm accounts={[DEMO]} onSubmit={noop} onCancel={noop} />);
-    const select = screen.getByRole('combobox') as HTMLSelectElement;
-    expect(select.value).toBe('acc-demo');
   });
 });
 

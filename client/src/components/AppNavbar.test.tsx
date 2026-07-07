@@ -33,7 +33,6 @@ function baseAuth(overrides: Partial<AuthReturn> = {}): AuthReturn {
     refreshUser: vi.fn(),
     keepAlive: vi.fn(),
     logout: vi.fn(),
-    loginAsDemo: vi.fn(),
     ...overrides,
   };
 }
@@ -60,7 +59,7 @@ describe('AppNavbar', () => {
 
   it('shows user email, nav links, and no Log In when logged in', () => {
     vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: '1', email: 'test@example.com', isPaid: false, emailVerified: true, isDemo: false } })
+      baseAuth({ user: { id: '1', email: 'test@example.com', emailVerified: true } })
     );
     renderNavbar();
     expect(screen.getByText('test@example.com')).toBeInTheDocument();
@@ -71,29 +70,19 @@ describe('AppNavbar', () => {
     expect(screen.getByRole('link', { name: 'Docs' })).toBeInTheDocument();
   });
 
-  it('shows the Account settings menu item for a real (non-demo) user', () => {
+  it('shows the API Tokens and Support menu items when logged in', () => {
     vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: '1', email: 'test@example.com', isPaid: false, emailVerified: true, isDemo: false } })
+      baseAuth({ user: { id: '1', email: 'test@example.com', emailVerified: true } })
     );
     renderNavbar();
-    expect(screen.getByRole('link', { name: 'Account' })).toBeInTheDocument();
-  });
-
-  it('hides the Account settings menu item for a demo user', () => {
-    vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: 'demo-1', email: 'demo-abc@demo.mytradeledger.local', isPaid: false, emailVerified: true, isDemo: true } })
-    );
-    renderNavbar();
-    expect(screen.queryByRole('link', { name: 'Account' })).not.toBeInTheDocument();
-    // Other menu items remain
     expect(screen.getByRole('link', { name: 'API Tokens' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /support/i })).toBeInTheDocument();
   });
 
   describe('active nav highlighting', () => {
     beforeEach(() => {
       vi.mocked(useAuth).mockReturnValue(
-        baseAuth({ user: { id: '1', email: 'test@example.com', isPaid: false, emailVerified: true, isDemo: false } })
+        baseAuth({ user: { id: '1', email: 'test@example.com', emailVerified: true } })
       );
     });
 
@@ -140,7 +129,7 @@ describe('AppNavbar', () => {
 
   it('opens the support modal when Support is clicked', () => {
     vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: '1', email: 'test@example.com', isPaid: false, emailVerified: true, isDemo: false } })
+      baseAuth({ user: { id: '1', email: 'test@example.com', emailVerified: true } })
     );
     renderNavbar();
     fireEvent.click(screen.getByRole('button', { name: /support/i }));
@@ -150,7 +139,7 @@ describe('AppNavbar', () => {
   it('calls logout() and navigates to / when Log out is clicked', () => {
     const logout = vi.fn();
     vi.mocked(useAuth).mockReturnValue(
-      baseAuth({ user: { id: '1', email: 'test@example.com', isPaid: false, emailVerified: true, isDemo: false }, logout })
+      baseAuth({ user: { id: '1', email: 'test@example.com', emailVerified: true }, logout })
     );
     renderNavbar();
     fireEvent.click(screen.getByRole('button', { name: /log out/i }));

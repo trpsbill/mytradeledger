@@ -1,10 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
-import { trackPageView } from './services/analytics';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { Layout } from './components';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { HomePage, SignupPage, LoginPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage, DashboardPage, AccountsPage, LedgerPage, DocsLayout, ApiTokensPage, AccountPage, TermsPage, PrivacyPage, RefundPage } from './pages';
+import { HomePage, SignupPage, LoginPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage, DashboardPage, AccountsPage, LedgerPage, DocsLayout, ApiTokensPage, PrivacyPage } from './pages';
 import { OverviewPage } from './pages/Docs/pages/OverviewPage';
 import { QuickstartPage } from './pages/Docs/pages/QuickstartPage';
 import { ConceptsPage } from './pages/Docs/pages/ConceptsPage';
@@ -18,14 +16,6 @@ import { AccountsApiPage } from './pages/Docs/pages/api/AccountsApiPage';
 import { LedgerApiPage } from './pages/Docs/pages/api/LedgerApiPage';
 import { AssetsApiPage } from './pages/Docs/pages/api/AssetsApiPage';
 
-function RouteTracker() {
-  const location = useLocation();
-  useEffect(() => {
-    trackPageView(location.pathname + location.search);
-  }, [location]);
-  return null;
-}
-
 function AppDocsRedirect() {
   const { '*': splat } = useParams();
   return <Navigate to={`/docs/${splat}`} replace />;
@@ -34,7 +24,6 @@ function AppDocsRedirect() {
 function App() {
   return (
     <BrowserRouter>
-      <RouteTracker />
       <AuthProvider>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -43,9 +32,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/refund" element={<RefundPage />} />
 
           {/* Redirect legacy /app/docs/* URLs to the public /docs route */}
           <Route path="/app/docs" element={<Navigate to="/docs" replace />} />
@@ -80,7 +67,6 @@ function App() {
             <Route path="accounts" element={<AccountsPage />} />
             <Route path="ledger" element={<LedgerPage />} />
             <Route path="settings/tokens" element={<ApiTokensPage />} />
-            <Route path="settings/account" element={<AccountPage />} />
           </Route>
         </Routes>
       </AuthProvider>

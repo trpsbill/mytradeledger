@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks';
 import dashboardScreenshot from '../../assets/screenshots/dashboard.jpg';
@@ -12,9 +12,7 @@ const AI_SKILL_URL = 'https://github.com/trpsbill/skills/tree/main/skills/mytrad
 const FOUNDER_URL = 'https://www.tiktok.com/@mytradeledger';
 const X_URL = 'https://x.com/MyTradeLedgerAp';
 const TIKTOK_URL = FOUNDER_URL;
-const TERMS_URL = '/terms';
 const PRIVACY_URL = '/privacy';
-const REFUND_URL = '/refund';
 
 const homeNavLinks = [
   { label: 'Docs',   to: '/docs',    external: false },
@@ -167,27 +165,12 @@ function CurlSnippet() {
 // ── Main component ────────────────────────────────────────────────────────
 
 export function HomePage() {
-  const { user, signupsEnabled, loginAsDemo } = useAuth();
+  const { user, signupsEnabled } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
-  const [demoLoading, setDemoLoading] = useState(false);
   const mobileNavRef = useRef<HTMLElement>(null);
-
-  async function handleTryDemo() {
-    setDemoLoading(true);
-    try {
-      await loginAsDemo();
-      navigate('/app');
-    } catch {
-      // Best-effort: leave the button in its normal state so the visitor can
-      // retry; a dedicated error UI is out of scope here.
-    } finally {
-      setDemoLoading(false);
-    }
-  }
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -337,15 +320,15 @@ export function HomePage() {
 
           {/* Primary CTA - desktop */}
           {signupsEnabled ? (
-            <a
-              href="#pricing"
+            <Link
+              to="/signup"
               className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
               style={{ background: green, color: bg }}
               onMouseEnter={e => (e.currentTarget.style.background = greenBright)}
               onMouseLeave={e => (e.currentTarget.style.background = green)}
             >
               Get Started
-            </a>
+            </Link>
           ) : (
             <span
               className="hidden md:inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold"
@@ -397,14 +380,14 @@ export function HomePage() {
               )
             )}
             {signupsEnabled && (
-              <a
-                href="#pricing"
+              <Link
+                to="/signup"
                 onClick={() => setMobileNavOpen(false)}
                 className="mt-1 text-center py-2 px-4 rounded-lg text-sm font-semibold transition-colors"
                 style={{ background: green, color: bg }}
               >
                 Get Started
-              </a>
+              </Link>
             )}
           </div>
         )}
@@ -421,7 +404,7 @@ export function HomePage() {
               <div style={fade(0)}>
                 <div className="flex w-fit max-w-full items-start gap-2 text-xs font-mono px-3 py-1.5 rounded-2xl mb-6"
                   style={{ border: `1px solid rgba(34,197,94,0.3)`, color: green, background: 'rgba(34,197,94,0.08)' }}>
-                  <span>✓ No spreadsheets · ✓ No credit card · ✓ Cancel anytime</span>
+                  <span>✓ No spreadsheets · ✓ Open source · ✓ Self-hosted</span>
                 </div>
               </div>
 
@@ -435,15 +418,15 @@ export function HomePage() {
 
               <div className="flex flex-wrap items-center gap-4 mb-4" style={fade(280)}>
                 {signupsEnabled ? (
-                  <a
-                    href="#pricing"
+                  <Link
+                    to="/signup"
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-base transition-colors"
                     style={{ background: green, color: bg }}
                     onMouseEnter={e => (e.currentTarget.style.background = greenBright)}
                     onMouseLeave={e => (e.currentTarget.style.background = green)}
                   >
                     Get Started →
-                  </a>
+                  </Link>
                 ) : (
                   <span
                     className="inline-flex items-center px-6 py-3 rounded-lg font-semibold text-base"
@@ -452,24 +435,11 @@ export function HomePage() {
                     Signups coming soon
                   </span>
                 )}
-                {signupsEnabled && (
-                  <button
-                    type="button"
-                    onClick={handleTryDemo}
-                    disabled={demoLoading}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-base transition-colors"
-                    style={{ border: `1px solid ${green}`, color: green, background: 'rgba(34,197,94,0.12)' }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = greenBright; e.currentTarget.style.color = greenBright; e.currentTarget.style.background = 'rgba(34,197,94,0.2)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = green; e.currentTarget.style.color = green; e.currentTarget.style.background = 'rgba(34,197,94,0.12)'; }}
-                  >
-                    {demoLoading ? <span className="loading loading-spinner loading-xs" /> : 'Try Live Demo →'}
-                  </button>
-                )}
                 <span className="inline-flex items-center gap-1.5 text-base" style={{ color: textSecondary }}>
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
-                  <span>Free to try · 25 trades included · <strong className="font-bold" style={{ color: textPrimary }}>no card required</strong></span>
+                  <span>Free and open source · <strong className="font-bold" style={{ color: textPrimary }}>run it yourself</strong></span>
                 </span>
               </div>
 
@@ -743,148 +713,48 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* ── Pricing ── */}
-        <section id="pricing" className="scroll-mt-16" style={{ borderTop: `1px solid ${border}`, background: surfaceAlt }} aria-label="Pricing">
+        {/* ── Get started ── */}
+        <section className="scroll-mt-16" style={{ borderTop: `1px solid ${border}`, background: surfaceAlt }} aria-label="Get started">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 md:py-20 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: textPrimary }}>Simple pricing</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: textPrimary }}>Free, forever</h2>
             <p className="leading-relaxed mb-10 text-lg" style={{ color: textSecondary }}>
-              Start free with 25 trades. Upgrade when you need more.
+              No pricing tiers, no trade limits, no credit card. Sign up here or run your own instance.
             </p>
 
-            {/* Pricing cards */}
-            <div className="grid sm:grid-cols-3 gap-6 mb-10 text-left">
-              {/* Free */}
-              <div
-                className="p-6 rounded-xl flex flex-col"
-                style={{ background: surface, border: `1px solid ${border}` }}
-              >
-                <p className="text-sm font-medium mb-3" style={{ color: textSecondary }}>Free</p>
-                <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-4xl font-bold" style={{ color: textPrimary }}>$0</span>
-                  <span className="text-sm" style={{ color: textMuted }}>forever</span>
-                </div>
-                <ul className="flex-1 space-y-2 text-sm mb-6" style={{ color: textSecondary }}>
-                  {['25 trades to get started', 'P&L tracking', 'No credit card required', 'Upgrade anytime'].map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <span style={{ color: green }}>✓</span>{f}
-                    </li>
-                  ))}
-                </ul>
-                {signupsEnabled ? (
-                  <Link
-                    to="/signup"
-                    className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition-colors"
-                    style={{ background: green, color: bg }}
-                    onMouseEnter={e => (e.currentTarget.style.background = greenBright)}
-                    onMouseLeave={e => (e.currentTarget.style.background = green)}
-                  >
-                    Start Free →
-                  </Link>
-                ) : (
-                  <span
-                    className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ border: `1px solid ${border}`, color: textMuted }}
-                  >
-                    Coming soon
-                  </span>
-                )}
-              </div>
-
-              {/* Monthly */}
-              <div
-                className="p-6 rounded-xl flex flex-col"
-                style={{ background: surface, border: `1px solid ${border}` }}
-              >
-                <p className="text-sm font-medium mb-3" style={{ color: textSecondary }}>Monthly</p>
-                <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-4xl font-bold" style={{ color: textPrimary }}>$5</span>
-                  <span className="text-sm" style={{ color: textMuted }}>/mo</span>
-                </div>
-                <ul className="flex-1 space-y-2 text-sm mb-6" style={{ color: textSecondary }}>
-                  {['Unlimited trades', 'Full API access', 'CSV import & export', 'Cancel anytime'].map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <span style={{ color: green }}>✓</span>{f}
-                    </li>
-                  ))}
-                </ul>
-                {signupsEnabled ? (
-                  <Link
-                    to="/signup"
-                    className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition-colors"
-                    style={{ background: green, color: bg }}
-                    onMouseEnter={e => (e.currentTarget.style.background = greenBright)}
-                    onMouseLeave={e => (e.currentTarget.style.background = green)}
-                  >
-                    Get Started →
-                  </Link>
-                ) : (
-                  <span
-                    className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ border: `1px solid ${border}`, color: textMuted }}
-                  >
-                    Coming soon
-                  </span>
-                )}
-              </div>
-
-              {/* Annual */}
-              <div
-                className="p-6 rounded-xl relative flex flex-col"
-                style={{ background: surface, border: `1px solid rgba(34,197,94,0.4)` }}
-              >
-                <span
-                  className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-semibold"
-                  style={{ background: green, color: '#0f1117' }}
+            <div className="flex justify-center gap-4 flex-wrap">
+              {signupsEnabled ? (
+                <Link
+                  to="/signup"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-base transition-colors"
+                  style={{ background: green, color: bg }}
+                  onMouseEnter={e => (e.currentTarget.style.background = greenBright)}
+                  onMouseLeave={e => (e.currentTarget.style.background = green)}
                 >
-                  Best value
+                  Get Started →
+                </Link>
+              ) : (
+                <span
+                  className="inline-flex items-center px-6 py-3 rounded-lg font-semibold text-base"
+                  style={{ border: `1px solid ${border}`, color: textMuted }}
+                >
+                  Signups coming soon
                 </span>
-                <p className="text-sm font-medium mb-3" style={{ color: textSecondary }}>Annual</p>
-                <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-4xl font-bold" style={{ color: textPrimary }}>$48</span>
-                  <span className="text-sm" style={{ color: textMuted }}>/yr</span>
-                </div>
-                <ul className="flex-1 space-y-2 text-sm mb-6" style={{ color: textSecondary }}>
-                  {['Everything in Monthly', 'Billed once per year', '2 months free vs monthly', 'Priority support'].map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <span style={{ color: green }}>✓</span>{f}
-                    </li>
-                  ))}
-                </ul>
-                {signupsEnabled ? (
-                  <Link
-                    to="/signup"
-                    className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition-colors"
-                    style={{ background: green, color: bg }}
-                    onMouseEnter={e => (e.currentTarget.style.background = greenBright)}
-                    onMouseLeave={e => (e.currentTarget.style.background = green)}
-                  >
-                    Get Started →
-                  </Link>
-                ) : (
-                  <span
-                    className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ border: `1px solid ${border}`, color: textMuted }}
-                  >
-                    Coming soon
-                  </span>
-                )}
-              </div>
+              )}
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                style={{ border: `1px solid ${border}`, color: textPrimary }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(34,197,94,0.5)'; e.currentTarget.style.color = green; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = border; e.currentTarget.style.color = textPrimary; }}
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                </svg>
+                Self-host for free →
+              </a>
             </div>
-
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
-              style={{ border: `1px solid ${border}`, color: textPrimary }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(34,197,94,0.5)'; e.currentTarget.style.color = green; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = border; e.currentTarget.style.color = textPrimary; }}
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-              </svg>
-              Self-host for free →
-            </a>
           </div>
         </section>
 
@@ -900,9 +770,7 @@ export function HomePage() {
             {[
               { label: 'Docs',    to: '/docs',       external: false },
               { label: 'GitHub',  to: GITHUB_URL,    external: true  },
-              { label: 'Terms of Service', to: TERMS_URL,   external: false },
               { label: 'Privacy Policy',  to: PRIVACY_URL, external: false },
-              { label: 'Cancellation Policy', to: REFUND_URL,  external: false },
               { label: 'Log In',  to: '/login',      external: false },
             ].map(({ label, to, external }) =>
               external ? (
