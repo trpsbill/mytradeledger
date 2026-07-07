@@ -10,12 +10,13 @@ The project is designed for traders who want a clear record of what trades were 
 
 - Log crypto **BUY** and **SELL** trades
 - Track quantity, price, fees, and timestamps
-- View cumulative profit or loss over time
+- Automatic gross and net realized P&L (average-cost method)
 - Clean, table-first interface
 - Support for multiple accounts or portfolios
-- Export all trade data to CSV
-- Runs locally with Docker
-- Optional hosted version for convenience
+- Bulk CSV import (with duplicate detection) and CSV export
+- Email/password auth with email verification and password reset
+- Personal access tokens for scripting against a real REST API
+- Runs locally with Docker — no external services required
 
 ---
 
@@ -87,25 +88,31 @@ Once running:
 
 ## Application Pages
 
-### Dashboard (`/`)
-- Account summary cards with P&L
+### Dashboard (`/app`)
+- Account summary cards with gross/net P&L and fees
 - Recent ledger activity with edit/delete
-- Add new trades directly from dashboard
+- Add new trades or import a CSV directly from the dashboard
 - Export to CSV
 
-### Accounts (`/accounts`)
+### Accounts (`/app/accounts`)
 - List all trading accounts
 - Create, edit, archive, and delete accounts
 - View P&L per account
 - Toggle archived accounts visibility
 
-### Ledger (`/ledger`)
+### Ledger (`/app/ledger`)
 - Chronological list of all ledger entries
 - Filter by symbol or entry type
 - Create new entries with auto-calculated values
 - Entry types: BUY, SELL
-- Edit and delete existing entries
+- Edit and delete existing entries, or clear the whole ledger
 - P&L automatically calculated for SELL entries
+
+### API Tokens (`/app/settings/tokens`)
+- Generate and revoke personal access tokens for API access
+
+### Docs (`/docs`)
+- Full public documentation, including a live API reference — no login required
 
 ---
 
@@ -220,19 +227,25 @@ mytradeledger/
 
 ## API Overview
 
+Every endpoint except `/api/health`, auth registration/login, and password-reset/verification requires
+a Bearer token — either your session JWT or a personal access token from Settings → API Tokens.
+
 | Endpoint | Description |
 |----------|-------------|
+| `POST /api/auth/register` / `/api/auth/login` | Create an account / get a session token |
 | `GET /api/accounts` | List all accounts |
 | `GET /api/accounts/:id/balance` | Get balances by symbol |
-| `GET /api/accounts/:id/pnl` | Get profit/loss |
+| `GET /api/accounts/:id/pnl` | Get gross/net profit or loss |
 | `GET /api/ledger` | List ledger entries (with filters) |
 | `POST /api/ledger` | Create ledger entry |
+| `POST /api/import/preview` / `/api/import/commit` | Preview and commit a CSV import |
 | `GET /api/ledger/export/csv` | Export to CSV |
 
 ### Example: Add a Trade
 
 ```bash
 curl -X POST http://localhost:3000/api/ledger \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "symbol": "BTC/USD",
@@ -243,27 +256,16 @@ curl -X POST http://localhost:3000/api/ledger \
   }'
 ```
 
-See [API Reference](docs/API.md) for complete documentation.
+See [API Reference](docs/API.md) for complete documentation, or the live docs at `/docs/api/*`.
 
 ---
 
-## Deployment Options
+## Deployment
 
-### Self-Hosted
-
-- Runs entirely on your own machine
-- No cloud dependencies
-- Ideal for users who want full control
-- Free to use
+- Runs entirely on your own machine or server
+- No cloud dependencies, no external services required
+- Free to use, no trade limits
 - Uses Docker and Docker Compose
-
-### Hosted (Optional)
-
-- Fully managed online version
-- No setup required
-- Accessible from any browser
-- Simple monthly subscription (planned, approximately $5 USD)
-- Same core functionality as the self-hosted version
 
 ---
 
@@ -303,10 +305,10 @@ MyTradeLedger is under active development. Features and structure may evolve, bu
 
 ## Who This Is For
 
-- Crypto traders who want a clean trade log
-- Users who prefer simple profit/loss tracking
-- Developers and technical users who like self-hosted tools
-- Anyone who wants an easy hosted option without complexity
+- Crypto traders who want a clean, private trade log they fully control
+- Users who prefer simple gross/net profit-loss tracking
+- Developers who want to script against their trade history via a real API
+- Anyone who'd rather self-host than hand their trade data to a third party
 
 ---
 
@@ -314,11 +316,11 @@ MyTradeLedger is under active development. Features and structure may evolve, bu
 
 - [x] Core ledger functionality
 - [x] Account management
-- [x] P&L calculations (average cost method)
-- [x] CSV export
+- [x] Gross/net P&L calculations (average cost method)
+- [x] CSV import and export
+- [x] Email/password auth, email verification, password reset
+- [x] Personal access tokens
 - [x] Light/dark theme
-- [ ] Hosted deployment
-- [ ] Basic authentication for hosted version
 - [ ] Ongoing usability refinements
 
 ---

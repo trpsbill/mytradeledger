@@ -206,6 +206,16 @@ The application will be available at http://localhost:80.
 | `DATABASE_URL` | PostgreSQL connection string | (required) |
 | `PORT` | Server port | `3000` |
 | `NODE_ENV` | Environment mode | `development` |
+| `JWT_SECRET` | Signs session JWTs — generate a strong random value in production | (required) |
+| `SESSION_IDLE_TIMEOUT_MS` / `SESSION_MAX_LIFETIME_MS` | Session expiry controls | `300000` / `28800000` |
+| `SIGNUP_ENABLED` | Set `false` to close registration (login still works) | `true` |
+| `CHALLENGE_ENABLED` | Self-hosted proof-of-work anti-automation challenge on repeated auth failures | `true` |
+| `MJ_APIKEY_PUBLIC` / `MJ_APIKEY_PRIVATE` / `MJ_FROM_EMAIL` | Mailjet, for password-reset/verification email | (unset — sandbox-logs instead) |
+| `MJ_SANDBOX` | `true` logs emails to console instead of sending | `true` |
+| `ADMIN_API_KEY` | Guards maintenance endpoints (token purge) | (unset — endpoint disabled) |
+| `REDIS_URL` | Optional shared rate-limit store for multi-instance deployments | (unset — in-memory) |
+
+See `server/.env.example` for the full list with detailed comments.
 
 ### Client Variables
 
@@ -233,8 +243,5 @@ See `.env.example` for all available options with detailed comments.
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Health check |
-| GET | `/api/accounts` | List accounts |
-| GET | `/api/ledger` | List ledger entries |
+See [API.md](./API.md) for an overview, or run the app and visit `/docs/api/*` for the full,
+always-current reference with request/response examples.

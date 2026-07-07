@@ -2,142 +2,58 @@
 
 ## Overview
 
-MyTradeLedger is a crypto trade logging application focused on simple, accurate record-keeping and clear profit or loss visibility. It allows users to record buy and sell trades, review them chronologically, and see cumulative financial results over time.
+MyTradeLedger is a crypto trade logging application focused on simple, accurate record-keeping and clear profit or loss visibility. It records buy and sell trades, reviews them chronologically, and shows cumulative financial results over time.
 
-The project is designed with a **local-first core** that can run entirely on a user’s machine using Docker, while also supporting an **optional hosted version** for users who prefer a managed, online experience.
+This is the **open-source, self-hosted** distribution: run it yourself with Docker, on your own infrastructure, with your own data. There is no hosted tier, no billing, no trade limits, and no anonymous "try it" mode baked into this codebase — every feature here is available to every account.
 
 ---
 
 ## Core Principles
 
-- **Simplicity first**  
-  The system records trades and shows profit or loss without additional interpretation.
-
-- **Trade-centric**  
-  Buy and sell executions are the primary unit of data.
-
-- **Minimal presentation**  
-  The interface prioritizes structured tables and chronological logs over dashboards or visual summaries.
-
-- **Data ownership**  
-  Users retain full access to their data, including the ability to export at any time.
-
-- **Flexible deployment**  
-  The same core application supports both self-hosted and managed online use.
+- **Simplicity first** — The system records trades and shows profit or loss without additional interpretation.
+- **Trade-centric** — Buy and sell executions are the primary unit of data.
+- **Data ownership** — You run the database; export your data to CSV at any time.
+- **A real API** — Every action available in the UI is available via the REST API with your own personal access token.
 
 ---
 
 ## What the Application Does
 
-- Records crypto buy and sell trades
+- Records crypto buy and sell trades across one or more accounts/portfolios
 - Tracks quantity, price, fees, and timestamps
-- Calculates net and cumulative profit or loss
-- Displays trades in a chronological log
-- Supports multiple accounts or portfolios
-- Exports all trade data to CSV
+- Calculates realized gross and net P&L automatically (average-cost method)
+- Bulk-imports trades from CSV (with duplicate detection)
+- Exports the full ledger to CSV
+- Supports email/password auth with email verification and password reset
+- Issues personal access tokens for scripting against the API
+- Seeds an optional sample "Demo Portfolio" account for exploring the app
 
 ---
 
-## Deployment Models
+## Deployment Model
 
-### Self-Hosted (Free / Open Use)
+Self-hosted only, via Docker Compose:
 
-- Runs locally using Docker and Docker Compose
-- Requires no external services
-- Intended for users who prefer full control
-- No ongoing costs beyond local infrastructure
+```bash
+make up      # start everything
+make db-migrate
+```
 
-### Hosted (Paid)
-
-- Fully managed online version
-- No installation or infrastructure setup required
-- Secure account access via browser
-- Intended for users who want convenience over self-hosting
-- Offered at a low monthly subscription cost (e.g., ~$5 USD)
-
-Both deployment models share the same core functionality and data model.
-
----
-
-## Monetization Strategy
-
-- **Primary revenue source:** Hosted version subscription
-- **Pricing approach:** Simple, affordable monthly fee
-- **Value proposition:** Convenience, zero setup, automatic updates
-- **Core parity:** Functionality remains consistent across self-hosted and hosted deployments
-
-The self-hosted version also serves as an entry point for users who later choose the hosted option.
-
----
-
-## User Workflow
-
-1. User records a buy or sell trade
-2. Trades appear in a chronological list
-3. Cumulative profit or loss is updated automatically
-4. User may review data or export to CSV at any time
-
-The workflow is intentionally linear and transparent.
-
----
-
-## Data Model (High-Level)
-
-- **Trade**
-  - Timestamp
-  - Symbol
-  - Side (BUY / SELL)
-  - Quantity
-  - Price
-  - Fees
-  - Total value
-
-- **Account**
-  - Name
-  - Base currency
-  - Trade history
-  - Net profit or loss
-
-All calculated values are derived directly from recorded trades.
+See [SETUP.md](./SETUP.md) for full instructions.
 
 ---
 
 ## Technical Stack
 
-- **Frontend**
-  - React
-  - Tailwind CSS
-  - DaisyUI
-
-- **Backend**
-  - Node.js
-  - REST API
-
-- **Database**
-  - PostgreSQL
-
-- **Runtime**
-  - Docker / Docker Compose
-
----
-
-## Export & Portability
-
-CSV export is a first-class feature. Exported files are designed to be stable, predictable, and easily consumed by spreadsheets or external tools.
+- **Frontend:** React + TypeScript + Vite + Tailwind CSS + DaisyUI
+- **Backend:** Node.js + Express + TypeScript
+- **Database:** PostgreSQL + Prisma ORM
+- **Runtime:** Docker + Docker Compose
 
 ---
 
 ## Target Audience
 
-- Crypto traders who want a clean, private trade log
-- Users who want clear profit or loss tracking without unnecessary complexity
-- Developers and technical users who prefer self-hosted tools
-- Non-technical users who prefer a simple hosted solution
-
----
-
-## Project Scope
-
-MyTradeLedger is intentionally narrow in scope. It focuses on recording trades and presenting cumulative financial results in a clear, transparent way.
-
-Future development must align with the core principles of simplicity, data ownership, minimal presentation, and deployment flexibility.
+- Crypto traders who want a private, accurate trade log they fully control
+- Developers who want to script against their trade history via a real API
+- Anyone who'd rather self-host than hand their trade data to a third party
