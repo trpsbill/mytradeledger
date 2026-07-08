@@ -1,32 +1,55 @@
 import express from 'express';
+import type { ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
+import authRoutes from './routes/authRoutes';
 import accountRoutes from './routes/accountRoutes';
 import assetRoutes from './routes/assetRoutes';
 import ledgerRoutes from './routes/ledgerRoutes';
+import importRoutes from './routes/importRoutes';
+import supportRoutes from './routes/supportRoutes';
+import { requireAuth } from './middleware/auth';
+import { requestLogger } from './middleware/requestLogger';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+// Number of reverse proxies in front of the app, so express-rate-limit can read
+// the real client IP from X-Forwarded-For. Hop count is deployment-specific:
+//   prod (Traefik -> nginx -> server) = 2; dev (direct to the port) = 0.
+// A wrong value either breaks rate limiting (everyone shares one bucket) or lets
+// clients spoof X-Forwarded-For to dodge it, so this is explicit, not assumed.
+// Numeric (never bare `true`) keeps express-rate-limit's spoof check happy.
+const trustProxy = Number(process.env.TRUST_PROXY ?? 0);
+app.set('trust proxy', Number.isNaN(trustProxy) ? 0 : trustProxy);
 
-// Health check endpoint
+app.use(cors());
+app.use(requestLogger);
+
+// Cap request bodies: these endpoints only ever receive small JSON payloads, so
+// a small limit removes a cheap memory-exhaustion vector.
+app.use(express.json({ limit: '10kb' }));
+
+// Health check (public)
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API routes
-app.use('/api/accounts', accountRoutes);
-app.use('/api/assets', assetRoutes);
-app.use('/api/ledger', ledgerRoutes);
+// Auth routes (public)
+app.use('/api/auth', authRoutes);
 
-// Account-scoped ledger entries shortcut
-app.get('/api/accounts/:accountId/ledger', async (req, res) => {
-  // Redirect to ledger route with accountId filter
+// All other API routes require authentication
+app.use('/api/accounts', requireAuth, accountRoutes);
+app.use('/api/assets', requireAuth, assetRoutes);
+app.use('/api/ledger', requireAuth, ledgerRoutes);
+app.use('/api/import', requireAuth, importRoutes);
+app.use('/api/support', requireAuth, supportRoutes);
+
+// Account-scoped ledger shortcut
+app.get('/api/accounts/:accountId/ledger', requireAuth, async (req, res) => {
   const { accountId } = req.params;
   const queryString = new URLSearchParams({
     ...req.query as Record<string, string>,
@@ -35,6 +58,18 @@ app.get('/api/accounts/:accountId/ledger', async (req, res) => {
   res.redirect(`/api/ledger?${queryString}`);
 });
 
+// Captures errors passed via next(err) and makes them available to requestLogger
+// via res.locals.error. Must be registered after all routes.
+const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
+  if (res.headersSent) { next(err); return; }
+  const message = err instanceof Error ? err.message : 'Internal server error';
+  const stack = err instanceof Error ? err.stack : undefined;
+  res.locals.error = { message, stack };
+  res.status(500).json({ error: 'Internal server error' });
+};
+app.use(errorHandler);
+
 app.listen(port, () => {
+  // eslint-disable-next-line no-console
   console.log(`Server running on http://localhost:${port}`);
 });

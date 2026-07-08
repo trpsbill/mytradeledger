@@ -1,28 +1,32 @@
 import { Request, Response } from 'express';
-import { EntryType } from '@prisma/client';
+import { EntryType, Prisma } from '@prisma/client';
 import { ledgerService } from '../services/ledgerService';
 import { CreateLedgerEntryRequest, UpdateLedgerEntryRequest, LedgerQueryParams } from '../types';
+const MAX_PAGE_SIZE = 200;
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_DELETE_BATCH_SIZE = 500;
 
 export const ledgerController = {
   async getAll(req: Request, res: Response) {
     try {
       const params: LedgerQueryParams = {
+        userId: req.user!.userId,
+        accountId: req.query.accountId as string | undefined,
         symbol: req.query.symbol as string,
         entryType: req.query.entryType as EntryType,
         startDate: req.query.startDate as string,
         endDate: req.query.endDate as string,
-        limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 100,
+        limit: Math.min(
+          req.query.limit ? parseInt(req.query.limit as string, 10) : DEFAULT_PAGE_SIZE,
+          MAX_PAGE_SIZE,
+        ),
         offset: req.query.offset ? parseInt(req.query.offset as string, 10) : 0,
       };
 
       const result = await ledgerService.findAll(params);
       res.json({
         data: result.entries,
-        meta: {
-          total: result.total,
-          limit: result.limit,
-          offset: result.offset,
-        },
+        meta: { total: result.total, limit: result.limit, offset: result.offset },
       });
     } catch (error) {
       console.error('Error fetching ledger entries:', error);
@@ -32,7 +36,7 @@ export const ledgerController = {
 
   async getById(req: Request, res: Response) {
     try {
-      const entry = await ledgerService.findById(req.params.id);
+      const entry = await ledgerService.findById(req.params.id, req.user!.userId);
       if (!entry) {
         return res.status(404).json({ error: 'Ledger entry not found' });
       }
@@ -45,9 +49,9 @@ export const ledgerController = {
 
   async create(req: Request, res: Response) {
     try {
+      const userId = req.user!.userId;
       const data: CreateLedgerEntryRequest = req.body;
 
-      // Validate required fields
       if (!data.symbol || typeof data.symbol !== 'string' || data.symbol.trim() === '') {
         return res.status(400).json({ error: 'symbol is required' });
       }
@@ -61,15 +65,11 @@ export const ledgerController = {
         return res.status(400).json({ error: 'price is required' });
       }
 
-      // Validate entry type (only BUY or SELL for now)
       const validEntryTypes = ['BUY', 'SELL'];
       if (!validEntryTypes.includes(data.entryType)) {
-        return res.status(400).json({
-          error: `Invalid entryType. Must be one of: ${validEntryTypes.join(', ')}`,
-        });
+        return res.status(400).json({ error: `Invalid entryType. Must be one of: ${validEntryTypes.join(', ')}` });
       }
 
-      // Validate numeric values
       const quantity = parseFloat(data.quantity.toString());
       const price = parseFloat(data.price.toString());
       if (isNaN(quantity) || quantity <= 0) {
@@ -85,9 +85,13 @@ export const ledgerController = {
         }
       }
 
-      const entry = await ledgerService.create(data);
+      const entry = await ledgerService.create(userId, data);
+
       res.status(201).json({ data: entry });
     } catch (error) {
+      if (error instanceof Error && error.message === 'accountId is required when multiple accounts exist') {
+        return res.status(400).json({ error: error.message });
+      }
       console.error('Error creating ledger entry:', error);
       res.status(500).json({ error: 'Failed to create ledger entry' });
     }
@@ -95,13 +99,15 @@ export const ledgerController = {
 
   async createBatch(req: Request, res: Response) {
     try {
+      const userId = req.user!.userId;
       const entries: CreateLedgerEntryRequest[] = req.body.entries;
 
       if (!Array.isArray(entries) || entries.length === 0) {
         return res.status(400).json({ error: 'entries array is required' });
       }
 
-      const result = await ledgerService.createMany(entries);
+      const result = await ledgerService.createMany(userId, entries);
+
       res.status(201).json({ data: { count: result.count } });
     } catch (error) {
       console.error('Error creating ledger entries:', error);
@@ -113,20 +119,17 @@ export const ledgerController = {
     try {
       const data: UpdateLedgerEntryRequest = req.body;
 
-      // Validate entry type if provided
       if (data.entryType) {
         const validEntryTypes = ['BUY', 'SELL'];
         if (!validEntryTypes.includes(data.entryType)) {
-          return res.status(400).json({
-            error: `Invalid entryType. Must be one of: ${validEntryTypes.join(', ')}`,
-          });
+          return res.status(400).json({ error: `Invalid entryType. Must be one of: ${validEntryTypes.join(', ')}` });
         }
       }
 
-      const entry = await ledgerService.update(req.params.id, data);
+      const entry = await ledgerService.update(req.params.id, req.user!.userId, data);
       res.json({ data: entry });
-    } catch (error: any) {
-      if (error.code === 'P2025') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'Entry not found') {
         return res.status(404).json({ error: 'Ledger entry not found' });
       }
       console.error('Error updating ledger entry:', error);
@@ -136,10 +139,10 @@ export const ledgerController = {
 
   async delete(req: Request, res: Response) {
     try {
-      await ledgerService.delete(req.params.id);
+      await ledgerService.delete(req.params.id, req.user!.userId);
       res.status(204).send();
-    } catch (error: any) {
-      if (error.code === 'P2025') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'Entry not found') {
         return res.status(404).json({ error: 'Ledger entry not found' });
       }
       console.error('Error deleting ledger entry:', error);
@@ -147,20 +150,36 @@ export const ledgerController = {
     }
   },
 
-  // Metadata endpoints
+  async deleteMany(req: Request, res: Response) {
+    try {
+      const { ids } = req.body as { ids: unknown };
+      if (!Array.isArray(ids) || ids.length === 0 || ids.some((id) => typeof id !== 'string')) {
+        return res.status(400).json({ error: 'ids must be a non-empty array of strings' });
+      }
+      if (ids.length > MAX_DELETE_BATCH_SIZE) {
+        return res.status(400).json({ error: `Batch size exceeds maximum of ${MAX_DELETE_BATCH_SIZE}` });
+      }
+      const result = await ledgerService.deleteMany(ids as string[], req.user!.userId);
+      res.json({ data: result });
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'Entry not found') {
+        return res.status(404).json({ error: 'One or more ledger entries not found' });
+      }
+      console.error('Error deleting ledger entries:', error);
+      res.status(500).json({ error: 'Failed to delete ledger entries' });
+    }
+  },
+
   async addMetadata(req: Request, res: Response) {
     try {
       const { key, value } = req.body;
-
       if (!key || !value) {
         return res.status(400).json({ error: 'key and value are required' });
       }
-
-      const entry = await ledgerService.findById(req.params.id);
+      const entry = await ledgerService.findById(req.params.id, req.user!.userId);
       if (!entry) {
         return res.status(404).json({ error: 'Ledger entry not found' });
       }
-
       const metadata = await ledgerService.addMetadata(req.params.id, key, value);
       res.status(201).json({ data: metadata });
     } catch (error) {
@@ -171,11 +190,10 @@ export const ledgerController = {
 
   async getMetadata(req: Request, res: Response) {
     try {
-      const entry = await ledgerService.findById(req.params.id);
+      const entry = await ledgerService.findById(req.params.id, req.user!.userId);
       if (!entry) {
         return res.status(404).json({ error: 'Ledger entry not found' });
       }
-
       const metadata = await ledgerService.getMetadata(req.params.id);
       res.json({ data: metadata });
     } catch (error) {
@@ -188,8 +206,8 @@ export const ledgerController = {
     try {
       await ledgerService.deleteMetadata(req.params.metadataId);
       res.status(204).send();
-    } catch (error: any) {
-      if (error.code === 'P2025') {
+    } catch (error: unknown) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
         return res.status(404).json({ error: 'Metadata not found' });
       }
       console.error('Error deleting metadata:', error);
@@ -199,7 +217,7 @@ export const ledgerController = {
 
   async recalculatePnL(req: Request, res: Response) {
     try {
-      const result = await ledgerService.recalculateAllPnL();
+      const result = await ledgerService.recalculateAllPnL(req.user!.userId);
       res.json({ data: result });
     } catch (error) {
       console.error('Error recalculating P&L:', error);
@@ -216,8 +234,7 @@ export const ledgerController = {
         endDate: req.query.endDate as string,
       };
 
-      const csv = await ledgerService.exportToCsv(params);
-
+      const csv = await ledgerService.exportToCsv(req.user!.userId, params);
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename="ledger-export-${new Date().toISOString().split('T')[0]}.csv"`);
       res.send(csv);
@@ -229,7 +246,7 @@ export const ledgerController = {
 
   async deleteAll(req: Request, res: Response) {
     try {
-      const result = await ledgerService.deleteAll();
+      const result = await ledgerService.deleteAll(req.user!.userId);
       res.json({ data: { deleted: result.count } });
     } catch (error) {
       console.error('Error deleting all ledger entries:', error);

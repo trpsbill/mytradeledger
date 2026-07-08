@@ -23,6 +23,7 @@ help:
 	@echo "  db-migrate   Run Prisma migrations"
 	@echo "  db-push      Push schema to database (dev)"
 	@echo "  db-studio    Open Prisma Studio"
+	@echo "  pgadmin      Show pgAdmin URL (http://localhost:5050)"
 	@echo "  db-reset     Reset database (WARNING: deletes data)"
 	@echo ""
 	@echo "Shell Access:"
@@ -37,56 +38,59 @@ help:
 dev: up
 
 up:
-	docker compose -f docker-compose.dev.yml up
+	docker compose up
 
 up-d:
-	docker compose -f docker-compose.dev.yml up -d
+	docker compose up -d
 
 down:
-	docker compose -f docker-compose.dev.yml down
+	docker compose down
 
 logs:
-	docker compose -f docker-compose.dev.yml logs -f
+	docker compose logs -f
 
 logs-server:
-	docker compose -f docker-compose.dev.yml logs -f server
+	docker compose logs -f server
 
 logs-client:
-	docker compose -f docker-compose.dev.yml logs -f client
+	docker compose logs -f client
 
 # Build
 build:
-	docker compose -f docker-compose.dev.yml build
+	docker compose build
 
 rebuild:
-	docker compose -f docker-compose.dev.yml build --no-cache
+	docker compose build --no-cache
 
 # Database
 db-migrate:
-	docker compose -f docker-compose.dev.yml exec server npx prisma migrate dev
+	docker compose exec server npx prisma migrate dev
 
 db-push:
-	docker compose -f docker-compose.dev.yml exec server npx prisma db push
+	docker compose exec server npx prisma db push
 
 db-studio:
 	@echo "Starting Prisma Studio on http://localhost:5555"
-	docker compose -f docker-compose.dev.yml exec server npx prisma studio
+	docker compose exec server npx prisma studio
+
+pgadmin:
+	@echo "pgAdmin running at http://localhost:5050 (admin@example.com / admin)"
 
 db-reset:
 	@echo "WARNING: This will delete all data!"
 	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
-	docker compose -f docker-compose.dev.yml exec server npx prisma migrate reset
+	docker compose exec server npx prisma migrate reset
 
 # Shell access
 shell-server:
-	docker compose -f docker-compose.dev.yml exec server sh
+	docker compose exec server sh
 
 shell-client:
-	docker compose -f docker-compose.dev.yml exec client sh
+	docker compose exec client sh
 
 shell-db:
-	docker compose -f docker-compose.dev.yml exec db psql -U postgres -d mytradeledger
+	docker compose exec db psql -U postgres -d mytradeledger
 
 # Cleanup
 clean:
-	docker compose -f docker-compose.dev.yml down -v
+	docker compose down -v

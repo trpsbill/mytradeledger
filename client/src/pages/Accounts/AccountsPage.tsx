@@ -12,6 +12,10 @@ export function AccountsPage() {
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null);
 
+  function handleNewAccountClick() {
+    setIsModalOpen(true);
+  }
+
   const { data: accounts, loading, error, refetch } = useApi(
     () => accountsApi.list(showArchived),
     [showArchived]
@@ -37,6 +41,11 @@ export function AccountsPage() {
     refetch();
   };
 
+  const handleSetDefault = async (account: Account) => {
+    await accountsApi.setDefault(account.id);
+    refetch();
+  };
+
   const handleArchive = async (account: Account) => {
     if (account.archivedAt) {
       await accountsApi.unarchive(account.id);
@@ -51,9 +60,9 @@ export function AccountsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-6">
         <h1 className="text-2xl font-bold">Accounts</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           <label className="label cursor-pointer gap-2">
             <span className="label-text">Show archived</span>
             <input
@@ -63,7 +72,7 @@ export function AccountsPage() {
               onChange={(e) => setShowArchived(e.target.checked)}
             />
           </label>
-          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+          <button className="btn btn-primary" onClick={handleNewAccountClick}>
             New Account
           </button>
         </div>
@@ -73,7 +82,7 @@ export function AccountsPage() {
         <EmptyState
           title="No accounts yet"
           description="Create your first trading account to start logging trades."
-          action={{ label: 'Create Account', onClick: () => setIsModalOpen(true) }}
+          action={{ label: 'Create Account', onClick: handleNewAccountClick }}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -84,6 +93,7 @@ export function AccountsPage() {
               onEdit={() => setEditingAccount(account)}
               onDelete={() => setDeletingAccount(account)}
               onArchive={() => handleArchive(account)}
+              onSetDefault={() => handleSetDefault(account)}
             />
           ))}
         </div>
@@ -132,9 +142,10 @@ interface AccountCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onArchive: () => void;
+  onSetDefault: () => void;
 }
 
-function AccountCard({ account, onEdit, onDelete, onArchive }: AccountCardProps) {
+function AccountCard({ account, onEdit, onDelete, onArchive, onSetDefault }: AccountCardProps) {
   const { data: pnl } = useApi(() => accountsApi.getPnL(account.id), [account.id]);
 
   const pnlValue = pnl ? parseFloat(pnl.totalPnL) : 0;
@@ -147,6 +158,9 @@ function AccountCard({ account, onEdit, onDelete, onArchive }: AccountCardProps)
           <div>
             <h2 className="card-title">
               {account.name}
+              {account.isDefault && (
+                <span className="badge badge-primary badge-sm">Default</span>
+              )}
               {account.archivedAt && (
                 <span className="badge badge-ghost badge-sm">Archived</span>
               )}
@@ -161,6 +175,9 @@ function AccountCard({ account, onEdit, onDelete, onArchive }: AccountCardProps)
             </label>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><button onClick={onEdit}>Edit</button></li>
+              {!account.isDefault && !account.isDemo && (
+                <li><button onClick={onSetDefault}>Set as default</button></li>
+              )}
               <li><button onClick={onArchive}>{account.archivedAt ? 'Unarchive' : 'Archive'}</button></li>
               <li><button onClick={onDelete} className="text-error">Delete</button></li>
             </ul>
@@ -177,7 +194,7 @@ function AccountCard({ account, onEdit, onDelete, onArchive }: AccountCardProps)
         </div>
 
         <div className="card-actions justify-end mt-4">
-          <Link to={`/ledger?accountId=${account.id}`} className="btn btn-sm btn-outline">
+          <Link to={`/app/ledger?accountId=${account.id}`} className="btn btn-sm btn-outline">
             View Ledger
           </Link>
         </div>

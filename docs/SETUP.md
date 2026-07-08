@@ -15,7 +15,7 @@ This project uses a **Docker-first** development approach. No local Node.js inst
 make dev
 
 # Or without make:
-docker compose -f docker-compose.dev.yml up
+docker compose up
 ```
 
 Once running:
@@ -62,8 +62,7 @@ mytradeledger/
 │   ├── server.dev.Dockerfile   # Development server
 │   └── nginx.conf              # Production nginx config
 │
-├── docker-compose.yml          # Production deployment
-├── docker-compose.dev.yml      # Development environment
+├── docker-compose.yml          # Everything you need (make up)
 ├── Makefile                    # Development commands
 └── .gitignore
 ```
@@ -129,9 +128,9 @@ make clean        # Stop containers and remove volumes
    make dev
    ```
 
-2. **Push database schema** (first time or after schema changes):
+2. **Apply database migrations** (first time or after pulling schema changes):
    ```bash
-   make db-push
+   make db-migrate
    ```
 
 3. **Open in browser:**
@@ -165,7 +164,7 @@ If you prefer to run the application locally without Docker, you'll need Node.js
 2. **Set up the server:**
    ```bash
    cd server
-   cp ../.env.example .env
+   cp .env.example .env
    # Edit .env to set DATABASE_URL to your PostgreSQL connection string
    npm install
    npx prisma db push
@@ -188,14 +187,15 @@ The client defaults to proxying API requests to `http://localhost:3000`. If your
 VITE_API_URL=http://localhost:4000 npm run dev
 ```
 
-## Production Deployment
+## Running It Long-Term
 
 ```bash
-# Build and start production containers
+# Build and start in the background
 docker compose up --build -d
 ```
 
-The application will be available at http://localhost:80.
+The client is reachable on `:5173` and the API on `:3000`. Put your own reverse proxy (nginx, Caddy,
+Traefik) in front if you want a domain name or TLS — nothing in this repo assumes one.
 
 ## Environment Variables
 
@@ -206,6 +206,18 @@ The application will be available at http://localhost:80.
 | `DATABASE_URL` | PostgreSQL connection string | (required) |
 | `PORT` | Server port | `3000` |
 | `NODE_ENV` | Environment mode | `development` |
+| `JWT_SECRET` | Signs session JWTs — generate a strong random value in production | (required) |
+| `SESSION_IDLE_TIMEOUT_MS` / `SESSION_MAX_LIFETIME_MS` | Session expiry controls | `300000` / `28800000` |
+| `SIGNUP_ENABLED` | Set `false` to close registration (login still works) | `true` |
+| `CHALLENGE_ENABLED` | Self-hosted proof-of-work anti-automation challenge on repeated auth failures | `true` |
+| `MJ_APIKEY_PUBLIC` / `MJ_APIKEY_PRIVATE` / `MJ_FROM_EMAIL` | Mailjet, used for the support request form only | (unset — sandbox-logs instead) |
+| `MJ_SANDBOX` | `true` logs emails to console instead of sending | `true` |
+| `REDIS_URL` | Optional shared rate-limit store for multi-instance deployments | (unset — in-memory) |
+
+There's no email verification or password-reset flow — this is a self-hosted, typically single-user
+instance with no email server assumed. Forgot your password? Reset it directly via `make db-studio`.
+
+See `server/.env.example` for the full list with detailed comments.
 
 ### Client Variables
 
@@ -215,13 +227,13 @@ The application will be available at http://localhost:80.
 
 ### Configuration by Environment
 
-**Docker (recommended):** Environment variables are pre-configured in `docker-compose.dev.yml`. No manual setup required.
+**Docker (recommended):** Copy `.env.example` to `.env` at the repo root — `docker-compose.yml` reads it via `${VAR}` substitution.
 
 **Local development (without Docker):**
 
 1. Copy the example environment file:
    ```bash
-   cp .env.example server/.env
+   cp server/.env.example server/.env
    ```
 
 2. For the client, the default `VITE_API_URL` is `http://localhost:3000`, which works for local development. If you need to override it, create `client/.env`:
@@ -233,8 +245,5 @@ See `.env.example` for all available options with detailed comments.
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Health check |
-| GET | `/api/accounts` | List accounts |
-| GET | `/api/ledger` | List ledger entries |
+See [API.md](./API.md) for an overview, or run the app and visit `/docs/api/*` for the full,
+always-current reference with request/response examples.

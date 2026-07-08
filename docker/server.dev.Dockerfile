@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install dependencies first (cached layer)
 COPY package*.json ./
-RUN npm install
+RUN npm install --ignore-scripts
 
 # Copy prisma schema and generate client
 COPY prisma ./prisma
@@ -18,4 +18,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+CMD npx prisma generate && npm run dev

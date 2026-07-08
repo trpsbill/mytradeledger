@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { assetService } from '../services/assetService';
 import { CreateAssetRequest, UpdateAssetRequest } from '../types';
 
@@ -53,8 +54,8 @@ export const assetController = {
       const data: UpdateAssetRequest = req.body;
       const asset = await assetService.update(req.params.id, data);
       res.json({ data: asset });
-    } catch (error: any) {
-      if (error.code === 'P2025') {
+    } catch (error: unknown) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
         return res.status(404).json({ error: 'Asset not found' });
       }
       console.error('Error updating asset:', error);
@@ -66,8 +67,8 @@ export const assetController = {
     try {
       await assetService.delete(req.params.id);
       res.status(204).send();
-    } catch (error: any) {
-      if (error.code === 'P2025') {
+    } catch (error: unknown) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
         return res.status(404).json({ error: 'Asset not found' });
       }
       console.error('Error deleting asset:', error);

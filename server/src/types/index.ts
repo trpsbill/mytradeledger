@@ -30,8 +30,9 @@ export interface CreateLedgerEntryRequest {
   quantity: string | number;
   price: string | number;
   fee?: string | number | null;
-  timestamp?: Date | string; // Defaults to now
+  timestamp?: Date | string;
   notes?: string | null;
+  accountId?: string;
 }
 
 export interface UpdateLedgerEntryRequest {
@@ -42,10 +43,13 @@ export interface UpdateLedgerEntryRequest {
   fee?: string | number | null;
   timestamp?: Date | string;
   notes?: string | null;
+  accountId?: string;
 }
 
 // Query parameters
 export interface LedgerQueryParams {
+  userId?: string;
+  accountId?: string;
   symbol?: string;
   entryType?: EntryType;
   startDate?: string;
@@ -68,3 +72,4 @@ export interface ApiError {
   error: string;
   details?: string;
 }
+

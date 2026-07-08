@@ -34,3 +34,13 @@ server/prisma/*.db-journal
 # Misc
 *.tgz
 .cache/
+
+# WSL download metadata
+*:Zone.Identifier
+
+# Local sample/import data
+/coinbase-export.csv
+*__csv_.csv
+
+# Production pg_dump backups
+/backups/

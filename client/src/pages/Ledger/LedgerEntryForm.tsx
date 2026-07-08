@@ -1,13 +1,27 @@
-import { useState } from 'react';
-import type { LedgerEntry, CreateLedgerEntryRequest, EntryType } from '../../types';
+import { useState, useEffect } from 'react';
+import type { Account, LedgerEntry, CreateLedgerEntryRequest, EntryType } from '../../types';
 
 interface LedgerEntryFormProps {
   entry?: LedgerEntry;
+  accounts?: Account[];
+  accountsLoading?: boolean;
+  initialAccountId?: string;
   onSubmit: (data: CreateLedgerEntryRequest) => Promise<void>;
   onCancel: () => void;
 }
 
-export function LedgerEntryForm({ entry, onSubmit, onCancel }: LedgerEntryFormProps) {
+export function LedgerEntryForm({ entry, accounts = [], accountsLoading = false, initialAccountId, onSubmit, onCancel }: LedgerEntryFormProps) {
+  // A user's isDemo account is just a bonus example portfolio, excluded here
+  // so it doesn't count as a "real" account for the account picker.
+  const nonDemoAccounts = accounts.filter((a) => !a.isDemo);
+  const hasMultipleChoices = nonDemoAccounts.length > 1;
+
+  // With multiple accounts and no pre-selected account, leave blank to force a choice.
+  const defaultAccountId = entry?.accountId
+    ?? initialAccountId
+    ?? (hasMultipleChoices ? '' : nonDemoAccounts.find((a) => a.isDefault)?.id ?? nonDemoAccounts[0]?.id ?? '');
+
+  const [accountId, setAccountId] = useState(defaultAccountId);
   const [symbol, setSymbol] = useState(entry?.symbol ?? '');
   const [entryType, setEntryType] = useState<EntryType>(entry?.entryType ?? 'BUY');
   const [quantity, setQuantity] = useState(entry ? Math.abs(parseFloat(entry.quantity)).toString() : '');
@@ -21,8 +35,27 @@ export function LedgerEntryForm({ entry, onSubmit, onCancel }: LedgerEntryFormPr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Show the picker while loading (so the user sees it coming) or when there are real accounts.
+  const showAccountPicker = accountsLoading || nonDemoAccounts.length >= 1;
+
+  // Race condition fix: accounts weren't loaded when form mounted.
+  // Only auto-fills for a single account; multiple accounts stay empty to force selection.
+  useEffect(() => {
+    if (accountId) return;
+    if (nonDemoAccounts.length === 1) {
+      setAccountId(nonDemoAccounts[0].id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (showAccountPicker && !accountId) {
+      setError(accountsLoading ? 'Accounts are still loading — please wait a moment' : 'Please select an account');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -35,6 +68,7 @@ export function LedgerEntryForm({ entry, onSubmit, onCancel }: LedgerEntryFormPr
         fee: fee || undefined,
         timestamp: new Date(timestamp).toISOString(),
         notes: notes || undefined,
+        accountId: accountId || undefined,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save entry');
@@ -56,12 +90,37 @@ export function LedgerEntryForm({ entry, onSubmit, onCancel }: LedgerEntryFormPr
         </div>
       )}
 
+      {/* Account picker */}
+      {showAccountPicker && (
+        <div className="flex items-center gap-3">
+          <span className="label-text text-xs whitespace-nowrap">Account <span className="text-error">*</span></span>
+          {accountsLoading ? (
+            <select className="select select-bordered select-sm flex-1" disabled>
+              <option>Loading accounts…</option>
+            </select>
+          ) : (
+            <select
+              className="select select-bordered select-sm flex-1"
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+            >
+              {!accountId && <option value="" disabled>Select account…</option>}
+              {nonDemoAccounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}{a.isDefault ? ' (default)' : ''}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
+
       {/* Main row - horizontal layout */}
       <div className="flex flex-wrap gap-3 items-end">
         {/* Symbol */}
         <div className="form-control flex-1 min-w-[120px]">
           <label className="label py-1">
-            <span className="label-text text-xs">Symbol</span>
+            <span className="label-text text-xs">Symbol <span className="text-error">*</span></span>
           </label>
           <input
             type="text"
@@ -75,9 +134,6 @@ export function LedgerEntryForm({ entry, onSubmit, onCancel }: LedgerEntryFormPr
 
         {/* Buy/Sell Toggle */}
         <div className="form-control">
-          <label className="label py-1">
-            <span className="label-text text-xs">Side</span>
-          </label>
           <div className="join">
             <button
               type="button"
@@ -99,7 +155,7 @@ export function LedgerEntryForm({ entry, onSubmit, onCancel }: LedgerEntryFormPr
         {/* Quantity */}
         <div className="form-control w-28">
           <label className="label py-1">
-            <span className="label-text text-xs">Quantity</span>
+            <span className="label-text text-xs">Quantity <span className="text-error">*</span></span>
           </label>
           <input
             type="text"
@@ -114,7 +170,7 @@ export function LedgerEntryForm({ entry, onSubmit, onCancel }: LedgerEntryFormPr
         {/* Price */}
         <div className="form-control w-28">
           <label className="label py-1">
-            <span className="label-text text-xs">Price</span>
+            <span className="label-text text-xs">Price <span className="text-error">*</span></span>
           </label>
           <input
             type="text"
@@ -143,7 +199,7 @@ export function LedgerEntryForm({ entry, onSubmit, onCancel }: LedgerEntryFormPr
         {/* Timestamp */}
         <div className="form-control w-44">
           <label className="label py-1">
-            <span className="label-text text-xs">Date/Time</span>
+            <span className="label-text text-xs">Date/Time <span className="text-error">*</span></span>
           </label>
           <input
             type="datetime-local"

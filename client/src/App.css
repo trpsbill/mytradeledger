@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+.app {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 24px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.message {
+  font-size: 1.25rem;
+  margin: 20px 0;
+}
+
+.health {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+}
