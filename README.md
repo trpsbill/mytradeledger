@@ -21,19 +21,6 @@ The project is designed for traders who want a clear record of what trades were 
 
 ---
 
-## Screenshots
-
-### Dashboard
-Overview of all accounts with P&L summaries, holdings, and recent activity.
-
-### Ledger
-Chronological trade log with filtering by account, asset, and entry type. Color-coded entries show gains (green) and losses (red).
-
-### Accounts
-Manage multiple trading accounts with individual P&L tracking.
-
----
-
 ## Philosophy
 
 MyTradeLedger focuses on clarity and accuracy rather than analysis or interpretation.
@@ -334,7 +321,7 @@ MyTradeLedger is under active development. Features and structure may evolve, bu
 
 ## License
 
-License details will be added prior to the first public release.
+[Apache License 2.0](LICENSE)
 
 ---
 
